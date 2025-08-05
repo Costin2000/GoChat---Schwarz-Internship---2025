@@ -1,0 +1,13 @@
+FROM golang
+
+WORKDIR /somedir
+
+RUN /bin/bash -c rm -rf relativePathToProject
+COPY relativePathToProject ./
+
+RUN go mod tidy
+
+# replace 8080 with actual port
+EXPOSE 8080
+
+CMD ["make{some make rule}"]
