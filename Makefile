@@ -1,17 +1,18 @@
-BINARY_NAME=./main/userBase-service
+BINARY_NAME=./services/user-base/main/userBase-service
 DOCKER_IMAGE_NAME=userbase-service
 DOCKER_IMAGE_TAG=latest
 
-PROTO_DIR=proto
+PROTO_DIR=./services/user-base/proto
 PROTO_FILE=$(PROTO_DIR)/api.proto
 PROTOC=protoc
-GO_MAIN_SOURCE=main/service.go
+GO_MAIN_SOURCE=./services/user-base/main/service.go
+GO_AUX_SOURCE=./services/user-base/main/user_base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
 .PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop
 
-all: up
+all: build up down
 
 proto:
 	@echo "==> Generating protobuf files..."
@@ -27,7 +28,7 @@ tidy:
 
 build: clean proto tidy
 	@echo "==> Building local binary..."
-	go build -o $(BINARY_NAME) ./$(GO_MAIN_SOURCE)
+	go build -o $(BINARY_NAME) ./$(GO_MAIN_SOURCE) ./$(GO_AUX_SOURCE)
 
 run: build
 	@echo "==> Running service locally..."
@@ -43,7 +44,7 @@ run: build
 	
 clean:
 	@echo "==> Cleaning up compiled files..."
-	rm -f $(BINARY_NAME) proto/*.go
+	rm -f $(BINARY_NAME) $(PROTO_DIR)/*.go
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."

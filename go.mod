@@ -1,4 +1,4 @@
-module github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base
+module github.com/Costin2000/GoChat---Schwarz-Internship---2025
 
 go 1.24.4
 
