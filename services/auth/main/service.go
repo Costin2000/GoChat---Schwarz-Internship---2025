@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/auth/proto"
+	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	"google.golang.org/grpc"
 )
 
