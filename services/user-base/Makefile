@@ -1,12 +1,12 @@
-BINARY_NAME=./services/user-base/main/userBase-service
+BINARY_NAME=./main/userBase-service
 DOCKER_IMAGE_NAME=userbase-service
 DOCKER_IMAGE_TAG=latest
 
-PROTO_DIR=./services/user-base/proto
+PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/api.proto
 PROTOC=protoc
-GO_MAIN_SOURCE=./services/user-base/main/service.go
-GO_AUX_SOURCE=./services/user-base/main/user_base.go
+GO_MAIN_SOURCE=./main/service.go
+GO_AUX_SOURCE=./main/user_base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
