@@ -1,9 +1,9 @@
-CREATE TABLE User (
-    id TEXT
+CREATE TABLE "User" (
+    id TEXT PRIMARY KEY
     first_name TEXT NOT NULL
     last_name TEXT NOT NULL
-    user_name TEXT NOT NULL
-    email TEXT NOT NULL
+    user_name TEXT NOT NULL UNIQUE
+    email TEXT NOT NULL UNIQUE
     password TEXT NOT NULL
-    created_at created_at TIMESTAMPTZ WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ WITH TIME ZONE NOT NULL DEFAULT NOW()
 )
