@@ -1,10 +1,10 @@
-module github.com/Costin2000/GoChat---Schwarz-Internship---2025/auth
+module github.com/Costin2000/GoChat---Schwarz-Internship---2025
 
 go 1.24.4
 
 require (
 	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.7
 )
 
 require (

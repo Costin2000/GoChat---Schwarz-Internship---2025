@@ -10,6 +10,15 @@ services:
       - "50053:50053"
     networks:
       - microservices-net
+  user-base:
+    build:
+      context: ./services/user-base
+      dockerfile: Dockerfile
+    container_name: user-base
+    ports:
+      - "50051:50051"
+    networks:
+      - microservices-net
 
 networks:
   microservices-net:
