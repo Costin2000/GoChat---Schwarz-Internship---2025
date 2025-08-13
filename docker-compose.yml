@@ -3,20 +3,31 @@ version: '3.8'
 services:
   auth:
     build:
-      context: ./services/auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/auth/Dockerfile
     container_name: auth-service
     ports:
       - "50053:50053"
     networks:
       - microservices-net
+
   user-base:
     build:
-      context: ./services/user-base
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/user-base/Dockerfile
     container_name: user-base
     ports:
       - "50051:50051"
+    networks:
+      - microservices-net
+
+  friend-request-base:
+    build:
+      context: .
+      dockerfile: ./services/friend-request-base/Dockerfile
+    container_name: friend-request-service
+    ports:
+      - "50052:50052"
     networks:
       - microservices-net
 

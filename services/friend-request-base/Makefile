@@ -1,9 +1,9 @@
-BINARY_NAME=auth-service
-DOCKER_IMAGE_NAME=auth-service
+BINARY_NAME=friend-request-service
+DOCKER_IMAGE_NAME=friend-request-service
 DOCKER_IMAGE_TAG=latest
 
 PROTO_DIR=proto
-PROTO_FILE=$(PROTO_DIR)/auth.proto
+PROTO_FILE=$(PROTO_DIR)/friendrequest.proto
 PROTOC=protoc
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
@@ -38,7 +38,7 @@ docker-build:
 
 docker-run:
 	@echo "==> Running Docker container..."
-	docker run -p 50053:50053 --rm --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	docker run -p 50052:50052 --rm --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 
 down:
 	@echo "==> Stopping Docker container..."
