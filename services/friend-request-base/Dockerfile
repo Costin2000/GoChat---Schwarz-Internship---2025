@@ -9,8 +9,8 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o service ./services/auth/main/service.go
+RUN go build -o service ./services/friend-request-base/main/service.go
 
-EXPOSE 50053
+EXPOSE 50052
 
 CMD ["./service"]
