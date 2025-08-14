@@ -6,7 +6,7 @@ PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/api.proto
 PROTOC=protoc
 GO_MAIN_SOURCE=./main/service.go
-GO_AUX_SOURCE=./main/user_base.go
+GO_AUX_SOURCE=./main/create-user.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
@@ -16,11 +16,11 @@ all: build up down
 
 proto:
 	@echo "==> Generating protobuf files..."
-	$(PROTOC) \
-		--proto_path=$(PROTO_DIR) \
-		--go_out=$(GO_OUT) \
-		--go-grpc_out=$(GO_GRPC_OUT) \
-		$(PROTO_FILE)
+    $(PROTOC) \
+        --proto_path=$(PROTO_DIR) \
+        --go_out=$(GO_OUT) \
+        --go-grpc_out=$(GO_GRPC_OUT) \
+        $(PROTO_FILE)
 
 tidy:
 	@echo "==> Tidying go modules..."
@@ -35,20 +35,20 @@ run: build
 	@./$(BINARY_NAME) & \
 	SERVER_PID=$$!; \
 	echo "Server started with PID: $$SERVER_PID"; \
-	echo "Waiting for server to initialize..."; \
-	sleep 2; \
-	echo "==> Sending request..."; \
-	grpcurl -plaintext localhost:50051 user_base.UserBase/Ping; \
-	echo "==> Shutting down server..."; \
-	kill $$SERVER_PID;
-	
+    echo "Waiting for server to initialize..."; \
+    sleep 2; \
+    echo "==> Sending request..."; \
+    grpcurl -plaintext localhost:50051 user_base.UserBase/Ping; \
+    echo "==> Shutting down server..."; \
+    kill $$SERVER_PID;
+    
 clean:
 	@echo "==> Cleaning up compiled files..."
 	rm -f $(BINARY_NAME) $(PROTO_DIR)/*.go
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile ../..
 
 docker-run:
 	@echo "==> Running Docker container..."

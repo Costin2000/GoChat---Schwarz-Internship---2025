@@ -9,7 +9,7 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o service ./main/service.go ./main/user_base.go
+RUN go build -o service ./services/user-base/main/service.go ./services/user-base/main/create-user.go
 
 EXPOSE 50051
 
