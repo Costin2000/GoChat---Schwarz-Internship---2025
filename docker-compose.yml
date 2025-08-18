@@ -3,8 +3,8 @@ version: '3.8'
 services:
   auth:
     build:
-      context: ./services/auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/auth/Dockerfile
     container_name: auth-service
     ports:
       - "50053:50053"
@@ -12,13 +12,29 @@ services:
       - microservices-net
   user-base:
     build:
-      context: ./services/user-base
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/user-base/Dockerfile
     container_name: user-base
     ports:
       - "50051:50051"
     networks:
       - microservices-net
+
+  db:
+    image: "postgres"
+    ports:
+      - 5432:5432
+    env_file:
+      - ./db/.env
+    networks:
+      - microservices-net
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data/
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=POSTGRES_USER
+      - POSTGRES_PASSWORD=POSTGRES_PASSWORD
+      - POSTGRES_DB=POSTGRES_DB
 
 networks:
   microservices-net:

@@ -3,7 +3,7 @@ DOCKER_IMAGE_NAME=userbase-service
 DOCKER_IMAGE_TAG=latest
 
 PROTO_DIR=./proto
-PROTO_FILE=$(PROTO_DIR)/api.proto
+PROTO_FILE=$(PROTO_DIR)/userbase.proto
 PROTOC=protoc
 GO_MAIN_SOURCE=./main/service.go
 GO_AUX_SOURCE=./main/create-user.go

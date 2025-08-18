@@ -1,4 +1,4 @@
-BINARY_NAME=auth-service
+BINARY_NAME=./main/auth-service
 DOCKER_IMAGE_NAME=auth-service
 DOCKER_IMAGE_TAG=latest
 
@@ -34,7 +34,7 @@ run:
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile ../..
 
 docker-run:
 	@echo "==> Running Docker container..."

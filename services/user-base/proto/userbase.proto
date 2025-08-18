@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package user_base;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "https://github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user_base/proto;proto";
+
+service UserBase {
+
+  /* Endpoint receives data corresponding to a new user and returns the newly
+     created user object populated with the receveived data */
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+
+  // Temp placeholder request method for devtesting
+  rpc Ping (Empty) returns (PingResponse) {}
+}
+
+service UserService {
+  // Query a user by their email address
+  rpc GetUser (GetUserRequest) returns (User) {}
+}
+
+message GetUserRequest {
+  string email = 1;
+}
+
+message User {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string user_name = 4;
+  string email = 5;
+  google.protobuf.Timestamp created_at = 6;
+  string password = 7;
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+
+// Temp placeholders req/rsp messages for devtesting
+
+message Empty {}
+
+message PingResponse {
+  string response = 1;
+}
