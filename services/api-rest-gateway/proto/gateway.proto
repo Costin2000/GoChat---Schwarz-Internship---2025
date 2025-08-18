@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package gateway;
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto;gateway";
+
+import "google/api/annotations.proto";
+import "services/auth/proto/auth.proto";
+
+service GatewayService {
+  rpc Ping(auth.Empty) returns (auth.Pong) {
+    option (google.api.http) = {
+      get: "/v1/ping"
+    };
+  }
+}

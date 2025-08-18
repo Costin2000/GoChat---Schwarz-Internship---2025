@@ -4,7 +4,7 @@ package user_base;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "https://github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user_base/proto;proto";
+option go_package = "https://github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
 
 service UserBase {
 
