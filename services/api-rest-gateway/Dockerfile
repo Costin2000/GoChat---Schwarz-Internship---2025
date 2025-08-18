@@ -1,6 +1,6 @@
 FROM golang:1.24-alpine
 
-RUN apk update && apk add --no-cache git
+RUN apk add --no-cache git
 
 WORKDIR /app
 
@@ -9,8 +9,8 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o service ./services/user-base/main
+RUN go build -o service ./services/api-rest-gateway/main
 
-EXPOSE 50051
+EXPOSE 8080
 
 CMD ["./service"]
