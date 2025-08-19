@@ -80,9 +80,9 @@ func main() {
 	dbPassword := os.Getenv("POSTGRESS_PASSWORD")
 	dbName := os.Getenv("POSTGRESS_DB")
 	dbPort := os.Getenv("DB_PORT")
+	dbHost := os.Getenv("DB_HOST")
 
-	connStr := fmt.Sprintf("user=%s password=%s host=localhost port=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbPort, dbName)
-
+	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
