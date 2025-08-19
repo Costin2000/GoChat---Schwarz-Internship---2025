@@ -4,7 +4,7 @@ package user_base;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "https://github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
 
 service UserBase {
 
@@ -12,9 +12,6 @@ service UserBase {
      created user object populated with the receveived data */
 
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-
-  // Temp placeholder request method for devtesting
-  rpc Ping (Empty) returns (PingResponse) {}
 }
 
 service UserService {
@@ -27,13 +24,13 @@ message GetUserRequest {
 }
 
 message User {
-  string id = 1;
+  int64 id = 1;
   string first_name = 2;
   string last_name = 3;
   string user_name = 4;
   string email = 5;
-  google.protobuf.Timestamp created_at = 6;
-  string password = 7;
+  string password = 6;
+  google.protobuf.Timestamp created_at = 7;
 }
 
 message CreateUserRequest {
@@ -42,13 +39,4 @@ message CreateUserRequest {
 
 message CreateUserResponse {
   User user = 1;
-}
-
-
-// Temp placeholders req/rsp messages for devtesting
-
-message Empty {}
-
-message PingResponse {
-  string response = 1;
 }

@@ -6,7 +6,7 @@ PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/userbase.proto
 PROTOC=protoc
 GO_MAIN_SOURCE=./main/service.go
-GO_AUX_SOURCE=./main/create-user.go
+GO_AUX_SOURCE=./main/get-user.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
@@ -16,11 +16,11 @@ all: build up down
 
 proto:
 	@echo "==> Generating protobuf files..."
-    $(PROTOC) \
-        --proto_path=$(PROTO_DIR) \
-        --go_out=$(GO_OUT) \
-        --go-grpc_out=$(GO_GRPC_OUT) \
-        $(PROTO_FILE)
+	$(PROTOC) \
+		--proto_path=$(PROTO_DIR) \
+		--go_out=$(GO_OUT) \
+		--go-grpc_out=$(GO_GRPC_OUT) \
+		$(PROTO_FILE)
 
 tidy:
 	@echo "==> Tidying go modules..."

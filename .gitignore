@@ -1,1 +1,2 @@
 services/*/proto/*.go
+services/*/main/*-service

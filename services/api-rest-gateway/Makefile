@@ -11,7 +11,7 @@ GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 GW_OUT=paths=source_relative:$(PROTO_DIR)
 GOPATH_DIR=$(shell go env GOPATH)
 GOOGLEAPIS=$(GOPATH_DIR)/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@*/third_party/googleapis
-M_AUTH=Mservices/auth/proto/auth.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/auth/proto
+M_AUTH=Mservices/auth/proto/auth.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto
 
 .PHONY: all proto build run tidy up down docker-build docker-run
 

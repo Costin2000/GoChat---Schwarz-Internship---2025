@@ -1,4 +1,4 @@
-BINARY_NAME=friend-request-service
+BINARY_NAME=./main/friend-request-service
 DOCKER_IMAGE_NAME=friend-request-service
 DOCKER_IMAGE_TAG=latest
 
