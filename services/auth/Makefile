@@ -1,4 +1,4 @@
-BINARY_NAME=auth-service
+BINARY_NAME=./main/auth-service
 DOCKER_IMAGE_NAME=auth-service
 DOCKER_IMAGE_TAG=latest
 

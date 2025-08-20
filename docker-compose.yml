@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   auth:
     build:
@@ -49,6 +47,24 @@ services:
       - auth
       - user-base
       - friend-request-base
+
+  db:
+    image: postgres:latest
+    container_name: postgres-db
+    env_file:
+      - ./db/.env
+    environment:
+      - POSTGRES_USER=POSTGRES_USER
+      - POSTGRES_PASSWORD=POSTGRES_PASSWORD
+      - POSTGRES_DB=POSTGRES_DB
+      - DB_HOST=db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${PWD}/db-data/:/var/lib/postgresql/data
+      - ${PWD}/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-net
 
 networks:
   microservices-net:

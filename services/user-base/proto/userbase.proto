@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package user_base;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
+
+service UserService {
+  // Query a user by their email address
+  rpc GetUser (GetUserRequest) returns (User) {}
+}
+
+message GetUserRequest {
+  string email = 1;
+}
+
+message User {
+  int64 id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string user_name = 4;
+  string email = 5;
+  string password = 6;
+  google.protobuf.Timestamp created_at = 7;
+}

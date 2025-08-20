@@ -1,1 +1,3 @@
 services/*/proto/*.go
+services/*/main/*-service
+db-data
