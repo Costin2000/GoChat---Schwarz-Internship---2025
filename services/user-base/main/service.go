@@ -66,8 +66,8 @@ func main() {
 	}
 
 	envPath := "./db/.env" // db env path from root
-	if filepath.Base(wd) == "main" {
-		envPath = "./../../../db/.env" // db env path from user-base service directory
+	if filepath.Base(wd) == "user-base" {
+		envPath = "./../../db/.env" // db env path from user-base service directory
 	}
 
 	// db connection
@@ -75,9 +75,9 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	dbUser := os.Getenv("POSTGRESS_USER")
-	dbPassword := os.Getenv("POSTGRESS_PASSWORD")
-	dbName := os.Getenv("POSTGRESS_DB")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
 	dbPort := os.Getenv("DB_PORT")
 	dbHost := os.Getenv("DB_HOST")
 
