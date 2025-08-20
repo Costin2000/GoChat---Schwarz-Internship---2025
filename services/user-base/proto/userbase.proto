@@ -6,14 +6,6 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
 
-service UserBase {
-
-  /* Endpoint receives data corresponding to a new user and returns the newly
-     created user object populated with the receveived data */
-
-  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-}
-
 service UserService {
   // Query a user by their email address
   rpc GetUser (GetUserRequest) returns (User) {}
@@ -31,12 +23,4 @@ message User {
   string email = 5;
   string password = 6;
   google.protobuf.Timestamp created_at = 7;
-}
-
-message CreateUserRequest {
-  User user = 1;
-}
-
-message CreateUserResponse {
-  User user = 1;
 }

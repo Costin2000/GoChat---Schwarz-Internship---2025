@@ -19,7 +19,6 @@ import (
 const port = ":50051"
 
 type userBaseServer struct {
-	proto.UnimplementedUserBaseServer
 	proto.UnimplementedUserServiceServer
 	db *sql.DB
 }
@@ -107,7 +106,6 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	proto.RegisterUserBaseServer(grpcServer, UserBaseServer)
 	proto.RegisterUserServiceServer(grpcServer, UserBaseServer)
 	reflection.Register(grpcServer)
 

@@ -14,7 +14,7 @@ import (
 
 func (s *userBaseServer) GetUser(ctx context.Context, req *proto.GetUserRequest) (*proto.User, error) {
 
-	log.Printf("GetUser request for email: %s", req.GetEmail())
+	log.Printf("GetUser request for email: %s", req.Email)
 	email := req.GetEmail()
 	if email == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "email cannot be empty")
@@ -42,8 +42,9 @@ func (s *userBaseServer) GetUser(ctx context.Context, req *proto.GetUserRequest)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.Internal, "failed to retrieve user")
+			return nil, status.Errorf(codes.NotFound, "user with email %s not found", email)
 		}
+
 		log.Printf("Database error on GetUser: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve user")
 	}
