@@ -12,19 +12,19 @@ SERVICES := services/api-rest-gateway services/auth services/friend-request-base
 # --- Docker Compose Commands ---
 up:
 	@echo "==> Starting all services with Docker Compose (builds if necessary)..."
-	docker-compose up --build -d
+	docker compose up --build -d
 
 down:
 	@echo "==> Stopping all Docker Compose services..."
-	docker-compose down
+	docker compose down
 
 down-hard:
 	@echo "==> Stopping all Docker Compose services and deleting the volumes..."
-	docker-compose down -v
+	docker compose down -v
 
 logs:
 	@echo "==> Tailing logs for all running services..."
-	docker-compose logs -f
+	docker compose logs -f
 
 # --- Service-Specific Commands (Loops) ---
 all: build
