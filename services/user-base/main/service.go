@@ -79,7 +79,13 @@ func main() {
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 	dbName := os.Getenv("POSTGRES_DB")
 	dbPort := os.Getenv("DB_PORT")
-	dbHost := os.Getenv("DB_HOST")
+
+	var dbHost string
+	if os.Getenv("ENV") == "docker" {
+		dbHost = "postgres-db"
+	} else {
+		dbHost = os.Getenv("DB_HOST")
+	}
 
 	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
 	db, err := sql.Open("pgx", connStr)
