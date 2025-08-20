@@ -6,7 +6,7 @@ PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/userbase.proto
 PROTOC=protoc
 GO_MAIN_SOURCE=./main/service.go
-GO_AUX_SOURCE=./main/get-user.go
+GO_AUX_SOURCE=./main/user-base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
@@ -31,16 +31,15 @@ build: clean proto tidy
 	go build -o $(BINARY_NAME) ./$(GO_MAIN_SOURCE) ./$(GO_AUX_SOURCE)
 
 run: build
+	@echo "==> Starting local database..."
+	@(cd ./scripts && ./db-start.sh)
 	@echo "==> Running service locally..."
-	@./$(BINARY_NAME) & \
-	SERVER_PID=$$!; \
-	echo "Server started with PID: $$SERVER_PID"; \
-    echo "Waiting for server to initialize..."; \
-    sleep 2; \
-    echo "==> Sending request..."; \
-    grpcurl -plaintext localhost:50051 user_base.UserBase/Ping; \
-    echo "==> Shutting down server..."; \
-    kill $$SERVER_PID;
+	@./main/userBase-service & \
+	PID=$$!; \
+	trap "echo '==> Shutting down server...'; kill $$PID; echo '==> Stopping local database...'; (cd ./scripts && ./db-stop.sh)" INT TERM; \
+	echo "Server started with PID: $$PID"; \
+	sleep 2; \
+	wait $$PID;
     
 clean:
 	@echo "==> Cleaning up compiled files..."

@@ -66,8 +66,8 @@ func main() {
 	}
 
 	envPath := "./db/.env" // db env path from root
-	if filepath.Base(wd) == "main" {
-		envPath = "./../../../db/.env" // db env path from user-base service directory
+	if filepath.Base(wd) == "user-base" {
+		envPath = "./../../db/.env" // db env path from user-base service directory
 	}
 
 	// db connection
@@ -75,11 +75,17 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	dbUser := os.Getenv("POSTGRESS_USER")
-	dbPassword := os.Getenv("POSTGRESS_PASSWORD")
-	dbName := os.Getenv("POSTGRESS_DB")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
 	dbPort := os.Getenv("DB_PORT")
-	dbHost := os.Getenv("DB_HOST")
+
+	var dbHost string
+	if os.Getenv("ENV") == "docker" {
+		dbHost = "postgres-db"
+	} else {
+		dbHost = os.Getenv("DB_HOST")
+	}
 
 	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
 	db, err := sql.Open("pgx", connStr)
