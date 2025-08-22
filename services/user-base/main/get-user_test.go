@@ -3,16 +3,85 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"testing"
 
+	errchecks "github.com/Costin2000/GoChat---Schwarz-Internship---2025/pkg"
+	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/testing/protocmp"
 )
+
+func fixtureGetUserRequest(mods ...func(req *pb.GetUserRequest)) *pb.GetUserRequest {
+	user := &pb.GetUserRequest{
+		Email: "johnwalter@yahoo.com",
+	}
+	for _, mod := range mods {
+		mod(user)
+	}
+	return user
+}
+
+func Test_GetUser(t *testing.T) {
+	type given struct {
+		mockStorageAccess StorageAccess
+	}
+
+	tests := []struct {
+		name         string
+		req          *pb.GetUserRequest
+		given        given
+		expectedErr  errchecks.Check
+		expectedResp *pb.User
+	}{
+		{
+			name: "email is empty",
+			req: fixtureGetUserRequest(func(req *pb.GetUserRequest) {
+				req.Email = ""
+			}),
+			expectedErr: errchecks.All(errchecks.MsgContains("email cannot be empty")),
+		},
+		{
+			name: "propagates error from getUserByEmail",
+			req:  fixtureGetUserRequest(),
+			given: given{
+				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
+					getUserByEmailFunc: func(ctx context.Context, email string) (*proto.User, error) {
+						return nil, errors.New("getting user failed")
+					},
+				}),
+			},
+			expectedErr: errchecks.All(errchecks.MsgContains("getting user failed")),
+		},
+		{
+			name:         "successfully found user by email",
+			req:          fixtureGetUserRequest(),
+			expectedResp: fixtureUser(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewMockService(ServiceMockOptions{
+				storageAccess: tt.given.mockStorageAccess,
+			})
+
+			resp, err := svc.GetUser(context.Background(), tt.req)
+
+			errchecks.Assert(t, err, tt.expectedErr)
+			if diff := cmp.Diff(tt.expectedResp, resp, protocmp.Transform()); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
+			}
+		})
+	}
+}
 
 func TestGetUser_Integration(t *testing.T) {
 
