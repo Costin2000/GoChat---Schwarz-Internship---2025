@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
 	"testing"
 
 	errchecks "github.com/Costin2000/GoChat---Schwarz-Internship---2025/pkg"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
@@ -97,68 +103,68 @@ func Test_CreateUser(t *testing.T) {
 	}
 }
 
-// func TestCreateUser_Integration(t *testing.T) {
-// 	testUser := &pb.User{
-// 		FirstName: "John",
-// 		LastName:  "Doe",
-// 		UserName:  "johndoe",
-// 		Email:     "johndoe@example.com",
-// 		Password:  "password123",
-// 	}
+func TestCreateUser_Integration(t *testing.T) {
+	testUser := &pb.User{
+		FirstName: "John",
+		LastName:  "Doe",
+		UserName:  "johndoe",
+		Email:     "johndoe@example.com",
+		Password:  "password123",
+	}
 
-// 	startDbCmd := exec.Command("bash", "./../scripts/db-start.sh")
-// 	stopDbCmd := exec.Command("bash", "./../scripts/db-stop.sh")
+	startDbCmd := exec.Command("bash", "./../scripts/db-start.sh")
+	stopDbCmd := exec.Command("bash", "./../scripts/db-stop.sh")
 
-// 	if err := startDbCmd.Run(); err != nil {
-// 		log.Fatalf("Error starting DB: %v", err)
-// 	}
+	if err := startDbCmd.Run(); err != nil {
+		log.Fatalf("Error starting DB: %v", err)
+	}
 
-// 	// load env
-// 	envPath := "./../../../db/.env"
-// 	if err := loadEnv(envPath); err != nil {
-// 		log.Fatalf("Error loading env: %v", err)
-// 	}
+	// load env
+	envPath := "./../../../db/.env"
+	if err := loadEnv(envPath); err != nil {
+		log.Fatalf("Error loading env: %v", err)
+	}
 
-// 	dbUser := os.Getenv("POSTGRES_USER")
-// 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
-// 	dbName := os.Getenv("POSTGRES_DB")
-// 	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbPort := os.Getenv("DB_PORT")
 
-// 	connStr := fmt.Sprintf("user=%s password=%s host=localhost port=%s dbname=%s sslmode=disable",
-// 		dbUser, dbPassword, dbPort, dbName)
+	connStr := fmt.Sprintf("user=%s password=%s host=localhost port=%s dbname=%s sslmode=disable",
+		dbUser, dbPassword, dbPort, dbName)
 
-// 	db, err := sql.Open("pgx", connStr)
-// 	if err != nil {
-// 		t.Fatalf("Failed to connect to DB: %v", err)
-// 	}
-// 	defer db.Close()
+	db, err := sql.Open("pgx", connStr)
+	if err != nil {
+		t.Fatalf("Failed to connect to DB: %v", err)
+	}
+	defer db.Close()
 
-// 	if err := db.Ping(); err != nil {
-// 		t.Fatalf("Failed to ping DB: %v", err)
-// 	}
+	if err := db.Ping(); err != nil {
+		t.Fatalf("Failed to ping DB: %v", err)
+	}
 
-// 	storage := newPostgresAccess(db)
-// 	s := &UserService{storageAccess: storage}
+	storage := newPostgresAccess(db)
+	s := &UserService{storageAccess: storage}
 
-// 	// Clean table
-// 	db.ExecContext(context.Background(), `DELETE FROM "User"`)
+	// Clean table
+	db.ExecContext(context.Background(), `DELETE FROM "User"`)
 
-// 	resp, err := s.CreateUser(context.Background(), &pb.CreateUserRequest{User: testUser})
-// 	if err != nil {
-// 		st, _ := status.FromError(err)
-// 		t.Fatalf("Expected success, got error: %v", st.Message())
-// 	}
+	resp, err := s.CreateUser(context.Background(), &pb.CreateUserRequest{User: testUser})
+	if err != nil {
+		st, _ := status.FromError(err)
+		t.Fatalf("Expected success, got error: %v", st.Message())
+	}
 
-// 	if resp.User.Email != testUser.Email {
-// 		t.Errorf("Expected email %s, got %s", testUser.Email, resp.User.Email)
-// 	}
+	if resp.User.Email != testUser.Email {
+		t.Errorf("Expected email %s, got %s", testUser.Email, resp.User.Email)
+	}
 
-// 	if resp.User.Password == testUser.Password {
-// 		t.Errorf("Password should be hashed, but got plain password")
-// 	}
+	if resp.User.Password == testUser.Password {
+		t.Errorf("Password should be hashed, but got plain password")
+	}
 
-// 	// Stop DB
-// 	if err := stopDbCmd.Run(); err != nil {
-// 		log.Fatalf("Error stopping DB: %v", err)
-// 	}
-// }
+	// Stop DB
+	if err := stopDbCmd.Run(); err != nil {
+		log.Fatalf("Error stopping DB: %v", err)
+	}
+}

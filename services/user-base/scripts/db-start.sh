@@ -28,13 +28,28 @@ if ! brew services list | grep -E "postgresql(@\d+)?\s+started" -q; then
     
     echo "-> Waiting for PostgreSQL to accept connections..."
     # Use pg_isready to wait until the server is available
-    until pg_isready -q -h "$POSTGRES_HOST" -U "$POSTGRES_USER"; do
+    until pg_isready -q; do
         sleep 1
     done
     echo "PostgreSQL is up and running."
 else
     echo "PostgreSQL server is already running."
 fi
+
+# Create user role if it does not exist
+# ------------------------------------
+# This connects using the default OS user, which is a superuser by default on Homebrew installs.
+echo "Checking for role '$POSTGRES_USER'..."
+ROLE_EXISTS=$(psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$POSTGRES_USER'")
+
+if [ "$ROLE_EXISTS" = "1" ]; then
+    echo "-> Role '$POSTGRES_USER' already exists."
+else
+    echo "-> Role '$POSTGRES_USER' not found. Creating it now..."
+    createuser --superuser "$POSTGRES_USER"
+    echo "-> Role created successfully."
+fi
+
 
 # recreate the Database and Run Init Script
 # ------------------------------------
