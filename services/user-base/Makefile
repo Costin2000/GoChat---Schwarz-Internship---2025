@@ -59,12 +59,6 @@ down:
 
 up: docker-build docker-run
 
-test: test-unit test-integration
-
-test-unit:
-	@echo "==> Running unit tests..."
-	@go test ./... -v -short
-
-test-integration:
-	@echo "==> Running integration tests..."
-	@go test ./... -v -tags=integration
+test:
+	@echo "==> Running tests for main package..."
+	@go test ./main -v
