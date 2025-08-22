@@ -6,8 +6,6 @@ PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/userbase.proto
 PROTOC_INCLUDE=/usr/local/include
 PROTOC=protoc
-GO_MAIN_SOURCE=./main/service.go
-GO_AUX_SOURCE=./main/user-base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
