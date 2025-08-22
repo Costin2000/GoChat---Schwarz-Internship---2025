@@ -57,8 +57,10 @@ func Test_CreateUser(t *testing.T) {
 		expectedResp *pb.CreateUserResponse
 	}{
 		{
-			name:        "nil user in request",
-			req:         &pb.CreateUserRequest{User: nil},
+			name: "nil user in request",
+			req: fixtureCreateUserRequest(func(req *pb.CreateUserRequest) {
+				req.User = nil
+			}),
 			expectedErr: errchecks.All(errchecks.MsgContains("user object is required")),
 		},
 		{
