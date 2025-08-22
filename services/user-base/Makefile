@@ -4,13 +4,14 @@ DOCKER_IMAGE_TAG=latest
 
 PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/userbase.proto
+PROTOC_INCLUDE=/usr/local/include
 PROTOC=protoc
 GO_MAIN_SOURCE=./main/service.go
 GO_AUX_SOURCE=./main/user-base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
-.PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop
+.PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop test test-unit test-integration
 
 all: build up down
 
@@ -18,6 +19,7 @@ proto:
 	@echo "==> Generating protobuf files..."
 	$(PROTOC) \
 		--proto_path=$(PROTO_DIR) \
+		-I=/usr/local/include \
 		--go_out=$(GO_OUT) \
 		--go-grpc_out=$(GO_GRPC_OUT) \
 		$(PROTO_FILE)
@@ -58,3 +60,13 @@ down:
 	docker stop $(DOCKER_IMAGE_NAME) || true
 
 up: docker-build docker-run
+
+test: test-unit test-integration
+
+test-unit:
+	@echo "==> Running unit tests..."
+	@go test ./... -v -short
+
+test-integration:
+	@echo "==> Running integration tests..."
+	@go test ./... -v -tags=integration
