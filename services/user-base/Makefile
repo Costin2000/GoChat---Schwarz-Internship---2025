@@ -4,13 +4,12 @@ DOCKER_IMAGE_TAG=latest
 
 PROTO_DIR=./proto
 PROTO_FILE=$(PROTO_DIR)/userbase.proto
+PROTOC_INCLUDE=/usr/local/include
 PROTOC=protoc
-GO_MAIN_SOURCE=./main/service.go
-GO_AUX_SOURCE=./main/user-base.go
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
-.PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop
+.PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop test test-unit test-integration
 
 all: build up down
 
@@ -18,6 +17,7 @@ proto:
 	@echo "==> Generating protobuf files..."
 	$(PROTOC) \
 		--proto_path=$(PROTO_DIR) \
+		-I=/usr/local/include \
 		--go_out=$(GO_OUT) \
 		--go-grpc_out=$(GO_GRPC_OUT) \
 		$(PROTO_FILE)
@@ -28,7 +28,7 @@ tidy:
 
 build: clean proto tidy
 	@echo "==> Building local binary..."
-	go build -o $(BINARY_NAME) ./$(GO_MAIN_SOURCE) ./$(GO_AUX_SOURCE)
+	go build -o $(BINARY_NAME) ./main
 
 run: build
 	@echo "==> Starting local database..."
@@ -58,3 +58,7 @@ down:
 	docker stop $(DOCKER_IMAGE_NAME) || true
 
 up: docker-build docker-run
+
+test:
+	@echo "==> Running tests for main package..."
+	@go test ./main -v

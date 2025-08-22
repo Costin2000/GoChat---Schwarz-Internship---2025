@@ -93,7 +93,8 @@ func TestGetUser_Integration(t *testing.T) {
 	}
 
 	// server connections
-	s := &userBaseServer{db: db}
+	storage := newPostgresAccess(db)
+	s := &UserService{storageAccess: storage}
 
 	for _, tt := range tests {
 

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
+	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -18,9 +18,9 @@ import (
 
 const port = ":50051"
 
-type userBaseServer struct {
-	proto.UnimplementedUserServiceServer
-	db *sql.DB
+type UserService struct {
+	storageAccess StorageAccess
+	pb.UnimplementedUserServiceServer
 }
 
 // retrieve db setup from the .env file
@@ -106,13 +106,14 @@ func main() {
 	}
 
 	// server connections
-	UserBaseServer := &userBaseServer{
-		db: db,
+	storage := newPostgresAccess(db)
+	UserBaseServer := &UserService{
+		storageAccess: storage,
 	}
 
 	grpcServer := grpc.NewServer()
 
-	proto.RegisterUserServiceServer(grpcServer, UserBaseServer)
+	pb.RegisterUserServiceServer(grpcServer, UserBaseServer)
 	reflection.Register(grpcServer)
 
 	log.Printf("gRPC polling on port %s...", port)
