@@ -28,7 +28,7 @@ tidy:
 
 build: clean proto tidy
 	@echo "==> Building local binary..."
-	go build -o $(BINARY_NAME) ./$(GO_MAIN_SOURCE) ./$(GO_AUX_SOURCE)
+	go build -o $(BINARY_NAME) ./main
 
 run: build
 	@echo "==> Starting local database..."
