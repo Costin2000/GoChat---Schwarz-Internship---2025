@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+	"strings"
+	"time"
+
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
-	"strings"
-	"time"
 )
 
 type StorageAccess interface {
@@ -73,13 +74,13 @@ func (pa *PostgresAccess) createUser(ctx context.Context, user *pb.User) (*pb.Us
 
 func (pa *PostgresAccess) getUserByEmail(ctx context.Context, email string) (*pb.User, error) {
 	var user pb.User
-	var createdAt time.Time // temporary variable for correctly typing the timestamp
+	var createdAt time.Time
 
 	query := `
-		SELECT id, first_name, last_name, user_name, email, created_at
-		FROM "User"
-		WHERE email = $1;
-	`
+        SELECT id, first_name, last_name, user_name, email, password, created_at
+        FROM "User"
+        WHERE email = $1;
+    `
 
 	row := pa.db.QueryRowContext(ctx, query, email)
 
@@ -89,6 +90,7 @@ func (pa *PostgresAccess) getUserByEmail(ctx context.Context, email string) (*pb
 		&user.LastName,
 		&user.UserName,
 		&user.Email,
+		&user.Password,
 		&createdAt,
 	)
 
@@ -101,7 +103,7 @@ func (pa *PostgresAccess) getUserByEmail(ctx context.Context, email string) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to retrieve user")
 	}
 
-	user.CreatedAt = timestamppb.New(createdAt) // cast the retrived createdAt time to the timestamp type
+	user.CreatedAt = timestamppb.New(createdAt)
 
 	return &user, nil
 }

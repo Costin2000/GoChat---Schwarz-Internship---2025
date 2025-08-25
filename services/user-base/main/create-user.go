@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
+	"strings"
+
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strings"
 )
 
 func (svc *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {

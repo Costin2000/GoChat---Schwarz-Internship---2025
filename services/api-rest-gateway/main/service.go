@@ -11,30 +11,39 @@ import (
 
 	gatewaypb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto"
 	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
+	userbasepb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type server struct {
 	gatewaypb.UnimplementedGatewayServiceServer
-	authClient authpb.AuthServiceClient
-	upstreamTO time.Duration
+	authClient     authpb.AuthServiceClient
+	userBaseClient userbasepb.UserServiceClient
+	upstreamTO     time.Duration
 }
 
 func main() {
 	httpAddr := env("GATEWAY_HTTP_ADDR", ":8080")
 	authAddr := env("AUTH_ADDR", "auth:50053")
+	userBaseAddr := env("USER_BASE_ADDR", "user-base:50051")
 	upstreamTimeout := durEnv("UPSTREAM_REQUEST_TIMEOUT", 5*time.Second)
 
-	authConn, err := grpc.Dial(authAddr, grpc.WithInsecure())
+	authConn, err := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial auth")
 	defer authConn.Close()
 
+	userBaseConn, err := grpc.Dial(userBaseAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial user-base")
+	defer userBaseConn.Close()
+
 	s := &server{
-		authClient: authpb.NewAuthServiceClient(authConn),
-		upstreamTO: upstreamTimeout,
+		authClient:     authpb.NewAuthServiceClient(authConn),
+		userBaseClient: userbasepb.NewUserServiceClient(userBaseConn),
+		upstreamTO:     upstreamTimeout,
 	}
 
 	json := &runtime.JSONPb{
@@ -65,7 +74,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("api-rest-gateway HTTP on %s (auth=%s)", httpAddr, authAddr)
+		log.Printf("api-rest-gateway HTTP on %s (auth=%s, user-base=%s)", httpAddr, authAddr, userBaseAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("http serve: %v", err)
 		}
@@ -85,6 +94,18 @@ func (s *server) Ping(ctx context.Context, _ *authpb.Empty) (*authpb.Pong, error
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
 	return s.authClient.Ping(c, &authpb.Empty{})
+}
+
+func (s *server) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.authClient.Login(c, req)
+}
+
+func (s *server) CreateUser(ctx context.Context, req *userbasepb.CreateUserRequest) (*userbasepb.CreateUserResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.userBaseClient.CreateUser(c, req)
 }
 
 func env(k, def string) string {
