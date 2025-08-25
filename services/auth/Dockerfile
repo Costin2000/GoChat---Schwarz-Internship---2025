@@ -9,7 +9,7 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o service ./services/auth/main/service.go
+RUN go build -o service ./services/auth/main
 
 EXPOSE 50053
 
