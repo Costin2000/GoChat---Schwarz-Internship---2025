@@ -14,11 +14,15 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type userBaseClient interface {
+	GetUser(ctx context.Context, in *userbasepb.GetUserRequest, opts ...grpc.CallOption) (*userbasepb.User, error)
+}
+
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type authServer struct {
 	proto.UnimplementedAuthServiceServer
-	userBaseClient userbasepb.UserServiceClient
+	userBaseClient userBaseClient
 }
 
 func (s *authServer) Ping(ctx context.Context, in *proto.Empty) (*proto.Pong, error) {

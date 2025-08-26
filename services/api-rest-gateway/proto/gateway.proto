@@ -23,7 +23,7 @@ service GatewayService {
 
     rpc CreateUser(user_base.CreateUserRequest) returns (user_base.CreateUserResponse) {
         option (google.api.http) = {
-            post: "/v1/users"
+            post: "/v1/user"
             body: "*"
         };
     }

@@ -28,7 +28,7 @@ services:
     networks:
       - microservices-net
     environment:
-      - JWT_SECRET=acesta_este_un_secret_puternic_schimba_l
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET} 
       - USER_BASE_ADDR=user-base:50051
     depends_on:
       - user-base
