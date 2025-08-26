@@ -23,14 +23,14 @@ func (s *authServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 	user, err := s.userBaseClient.GetUser(ctx, userReq)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return nil, status.Error(codes.NotFound, "user not found")
+			return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials: %v", err)
 	}
 
 	tokenString, err := generateJWT(user.Id)

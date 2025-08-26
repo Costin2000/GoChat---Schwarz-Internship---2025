@@ -30,12 +30,13 @@ func TestLogin(t *testing.T) {
 	t.Setenv("AUTH_JWT_SECRET", "secret-test")
 
 	testCases := []struct {
-		name          string
-		email         string
-		password      string
-		mockUser      *userbasepb.User
-		mockError     error
-		expectedError codes.Code
+		name             string
+		email            string
+		password         string
+		mockUser         *userbasepb.User
+		mockError        error
+		expectedError    codes.Code
+		expectedResponse *proto.LoginResponse
 	}{
 		{
 			name:     "Login succesful!",
@@ -49,14 +50,18 @@ func TestLogin(t *testing.T) {
 			},
 			mockError:     nil,
 			expectedError: codes.OK,
+			expectedResponse: &proto.LoginResponse{
+				UserId: 1,
+			},
 		},
 		{
-			name:          "User not found",
-			email:         "usernotfound@exemplu.com",
-			password:      "pass",
-			mockUser:      nil,
-			mockError:     status.Error(codes.NotFound, "user not found"),
-			expectedError: codes.NotFound,
+			name:             "User not found",
+			email:            "usernotfound@exemplu.com",
+			password:         "pass",
+			mockUser:         nil,
+			mockError:        status.Error(codes.NotFound, "user not found"),
+			expectedError:    codes.NotFound,
+			expectedResponse: nil,
 		},
 		{
 			name:     "Wrong password",
@@ -67,24 +72,27 @@ func TestLogin(t *testing.T) {
 				Email:    "test@exemple.com",
 				Password: string(hashedPassword),
 			},
-			mockError:     nil,
-			expectedError: codes.Unauthenticated,
+			mockError:        nil,
+			expectedError:    codes.Unauthenticated,
+			expectedResponse: nil,
 		},
 		{
-			name:          "Invalid input - empty password",
-			email:         "test@exemple.com",
-			password:      "",
-			mockUser:      nil,
-			mockError:     nil,
-			expectedError: codes.InvalidArgument,
+			name:             "Invalid input - empty password",
+			email:            "test@exemple.com",
+			password:         "",
+			mockUser:         nil,
+			mockError:        nil,
+			expectedError:    codes.InvalidArgument,
+			expectedResponse: nil,
 		},
 		{
-			name:          "Internal error from user-base",
-			email:         "test@exemple.com",
-			password:      "any-password",
-			mockUser:      nil,
-			mockError:     status.Error(codes.Internal, "simulated database error"),
-			expectedError: codes.Internal,
+			name:             "Internal error from user-base",
+			email:            "test@exemple.com",
+			password:         "any-password",
+			mockUser:         nil,
+			mockError:        status.Error(codes.Internal, "simulated database error"),
+			expectedError:    codes.Internal,
+			expectedResponse: nil,
 		},
 	}
 
@@ -113,8 +121,11 @@ func TestLogin(t *testing.T) {
 				if res == nil {
 					t.Fatal("Waiting for response, got nil")
 				}
+				if res.UserId != tc.expectedResponse.UserId {
+					t.Errorf("Expected UserId %d, but got %d", tc.expectedResponse.UserId, res.UserId)
+				}
 				if res.Token == "" {
-					t.Error("JWT tocken should not be empty")
+					t.Error("JWT token should not be empty")
 				}
 			} else {
 				if err == nil {
