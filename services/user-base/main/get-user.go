@@ -11,7 +11,7 @@ import (
 
 func (svc *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
 	log.Printf("GetUser request for email: %s", req.Email)
-	email := req.GetEmail()
+	email := req.Email
 	if email == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "email cannot be empty")
 	}

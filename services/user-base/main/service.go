@@ -112,7 +112,6 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-
 	pb.RegisterUserServiceServer(grpcServer, UserBaseServer)
 	reflection.Register(grpcServer)
 

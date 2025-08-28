@@ -2,14 +2,34 @@ syntax = "proto3";
 
 package friendrequest;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto;proto";
 
 service FriendRequestService {
-    rpc Ping(Empty) returns (Pong);
+    rpc CreateFriendRequest (CreateFriendRequestRequest) returns (CreateFriendRequestResponse);
 }
 
-message Empty {}
+message FriendRequest {
+  string id = 1;
+  string sender_id = 2;
+  string receiver_id = 3;   
+  RequestStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
 
-message Pong {
-    string message = 1;
+enum RequestStatus {
+  STATUS_UNKNOWN = 0;
+  STATUS_PENDING = 1; // mapped to 1 in the db
+  STATUS_ACCEPTED = 2; // mapped to 2 in the db
+  STATUS_REJECTED = 3; // mapped to 3 in the db
+}
+
+message CreateFriendRequestRequest {
+  string sender_id = 1;
+  string receiver_id = 2;
+}
+
+message CreateFriendRequestResponse {
+  FriendRequest request = 1;
 }

@@ -8,7 +8,7 @@ PROTOC=protoc
 GO_OUT=paths=source_relative:$(PROTO_DIR)
 GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
 
-.PHONY: all proto build run tidy up down docker-build docker-run docker-stop
+.PHONY: all proto build run tidy up down docker-build docker-run docker-stop test
 
 all: up
 
@@ -28,9 +28,20 @@ build: proto tidy
 	@echo "==> Building local binary..."
 	go build -o $(BINARY_NAME) ./main
 
-run:
+run: build
+	@echo "==> Starting local database..."
+	@(cd ./scripts && ./db-start.sh)
 	@echo "==> Running service locally..."
-	go run ./main
+	@./main/friend-request-service & \
+	PID=$$!; \
+	trap "echo '==> Shutting down server...'; kill $$PID; echo '==> Stopping local database...'; (cd ./scripts && ./db-stop.sh)" INT TERM; \
+	echo "Server started with PID: $$PID"; \
+	sleep 2; \
+	wait $$PID;
+
+test:
+	@echo "==> Running tests for main package..."
+	@go test ./main -v
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
