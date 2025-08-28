@@ -14,7 +14,7 @@ message FriendRequest {
   string id = 1;
   string sender_id = 2;
   string receiver_id = 3;   
-  RequestStatus status = 4;  // ENUM: 'pending', 'accepted', 'rejected'
+  RequestStatus status = 4;
   google.protobuf.Timestamp created_at = 5;
 }
 

@@ -30,7 +30,7 @@ service GatewayService {
 
     rpc CreateFriendRequest(friendrequest.CreateFriendRequestRequest) returns (friendrequest.CreateFriendRequestResponse) {
         option (google.api.http) = {
-          post: "/v1/friend-requests"
+          post: "/v1/friend-request"
           body: "*"
       };
   }

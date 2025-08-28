@@ -55,21 +55,21 @@ func Test_CreateFriendRequestRequest(t *testing.T) {
 			req: fixtureCreateFriendRequest(func(req *pb.CreateFriendRequestRequest) {
 				req.SenderId = ""
 			}),
-			expecterErr: errchecks.All(errchecks.MsgContains("sender and receiver IDs cannot be empty")),
+			expecterErr: errchecks.MsgContains("sender and receiver IDs cannot be empty"),
 		},
 		{
 			name: "Empty receiver id",
 			req: fixtureCreateFriendRequest(func(req *pb.CreateFriendRequestRequest) {
 				req.ReceiverId = ""
 			}),
-			expecterErr: errchecks.All(errchecks.MsgContains("sender and receiver IDs cannot be empty")),
+			expecterErr: errchecks.MsgContains("sender and receiver IDs cannot be empty"),
 		},
 		{
 			name: "Sender id same as receiver id",
 			req: fixtureCreateFriendRequest(func(req *pb.CreateFriendRequestRequest) {
 				req.ReceiverId = req.SenderId
 			}),
-			expecterErr:  errchecks.All(errchecks.MsgContains("sender and receiver cannot be the same user")),
+			expecterErr:  errchecks.MsgContains("sender and receiver cannot be the same user"),
 			expectedResp: nil,
 		},
 		{
