@@ -11,29 +11,38 @@ import (
 
 	gatewaypb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto"
 	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
+	friendrequestpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type server struct {
 	gatewaypb.UnimplementedGatewayServiceServer
 	authClient authpb.AuthServiceClient
+	frClient   friendrequestpb.FriendRequestServiceClient
 	upstreamTO time.Duration
 }
 
 func main() {
 	httpAddr := env("GATEWAY_HTTP_ADDR", ":8080")
 	authAddr := env("AUTH_ADDR", "auth:50053")
+	friendRequestAddr := env("FRIEND_REQUEST_ADDR", "friend-request:50052")
 	upstreamTimeout := durEnv("UPSTREAM_REQUEST_TIMEOUT", 5*time.Second)
 
-	authConn, err := grpc.Dial(authAddr, grpc.WithInsecure())
+	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial auth")
 	defer authConn.Close()
 
+	frConn, err := grpc.NewClient(friendRequestAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial friend request service")
+	defer frConn.Close()
+
 	s := &server{
 		authClient: authpb.NewAuthServiceClient(authConn),
+		frClient:   friendrequestpb.NewFriendRequestServiceClient(frConn),
 		upstreamTO: upstreamTimeout,
 	}
 
@@ -85,6 +94,12 @@ func (s *server) Ping(ctx context.Context, _ *authpb.Empty) (*authpb.Pong, error
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
 	return s.authClient.Ping(c, &authpb.Empty{})
+}
+
+func (s *server) CreateFriendRequest(ctx context.Context, req *friendrequestpb.CreateFriendRequestRequest) (*friendrequestpb.CreateFriendRequestResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.frClient.CreateFriendRequest(c, req)
 }
 
 func env(k, def string) string {

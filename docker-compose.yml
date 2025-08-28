@@ -52,10 +52,19 @@ services:
       context: .
       dockerfile: ./services/friend-request-base/Dockerfile
     container_name: friend-request-service
+    environment:
+      - ENV=docker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
     ports:
       - "50052:50052"
     networks:
       - microservices-net
+    depends_on:
+      db:
+        condition: service_healthy
   
   api-rest-gateway:
     build:

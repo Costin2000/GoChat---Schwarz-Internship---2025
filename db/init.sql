@@ -7,3 +7,22 @@ CREATE TABLE IF NOT EXISTS "User" (
     password TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'friend_request_status') THEN
+        CREATE TYPE FRIEND_REQUEST_STATUS AS ENUM ('pending', 'accepted', 'rejected', 'blocked');
+    END IF;
+END$$;
+
+CREATE TABLE IF NOT EXISTS "Friend Requests" (
+    id BIGSERIAL,
+    sender_id BIGINT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+    receiver_id BIGINT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+    status FRIEND_REQUEST_STATUS NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CHECK (sender_id <> receiver_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS FRIEND_REQUEST_ORDER_IDX ON "Friend Requests" (LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id));

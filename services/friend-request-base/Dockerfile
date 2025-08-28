@@ -9,7 +9,7 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o service ./services/friend-request-base/main/service.go
+RUN go build -o service ./services/friend-request-base/main
 
 EXPOSE 50052
 

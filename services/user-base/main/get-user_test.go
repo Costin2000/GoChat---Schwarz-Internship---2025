@@ -12,7 +12,6 @@ import (
 
 	errchecks "github.com/Costin2000/GoChat---Schwarz-Internship---2025/pkg"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
-	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,7 +52,7 @@ func Test_GetUser(t *testing.T) {
 			req:  fixtureGetUserRequest(),
 			given: given{
 				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
-					getUserByEmailFunc: func(ctx context.Context, email string) (*proto.User, error) {
+					getUserByEmailFunc: func(ctx context.Context, email string) (*pb.User, error) {
 						return nil, errors.New("getting user failed")
 					},
 				}),
@@ -85,52 +84,50 @@ func Test_GetUser(t *testing.T) {
 
 func TestGetUser_Integration(t *testing.T) {
 
-	testGoodUser := &proto.User{
+	testGoodUser := &pb.User{
 		FirstName: "dummy",
 		LastName:  "user",
 		UserName:  "testuser1",
-		Email:     "test@example.com",
+		Email:     "test1@example.com",
 		Password:  "password",
 	}
 
-	testBadUser := &proto.User{
+	testBadUser := &pb.User{
 		FirstName: "dummy",
 		LastName:  "user",
 		UserName:  "",
-		Email:     "test@example.com",
+		Email:     "test2@example.com",
 		Password:  "password",
 	}
 
 	tests := []struct {
 		name         string
-		inputUser    *proto.User
-		request      *proto.GetUserRequest
+		inputUser    *pb.User
+		request      *pb.GetUserRequest
 		expectedCode codes.Code
 	}{
 		{
 			name:         "Good request",
 			inputUser:    testGoodUser,
-			request:      &proto.GetUserRequest{Email: "test@example.com"},
+			request:      &pb.GetUserRequest{Email: "test1@example.com"},
 			expectedCode: codes.OK,
 		},
 		{
 			name:         "Bad request - no email provided",
 			inputUser:    testGoodUser,
-			request:      &proto.GetUserRequest{Email: ""},
+			request:      &pb.GetUserRequest{Email: ""},
 			expectedCode: codes.InvalidArgument,
 		},
 		{
 			name:         "Bad request - invalid email",
 			inputUser:    testBadUser,
-			request:      &proto.GetUserRequest{Email: "test@badexample.com"},
+			request:      &pb.GetUserRequest{Email: "test@badexample.com"},
 			expectedCode: codes.NotFound,
 		},
 	}
 
-	startDbScript := "./../scripts/db-start.sh"
-	startDbCmd := exec.Command("bash", startDbScript)
-	stopDbScript := "./../scripts/db-stop.sh"
-	stopDbCmd := exec.Command("bash", stopDbScript)
+	startDbCmd := exec.Command("bash", "./../scripts/db-start.sh")
+	stopDbCmd := exec.Command("bash", "./../scripts/db-stop.sh")
 
 	err := startDbCmd.Run()
 	if err != nil {
