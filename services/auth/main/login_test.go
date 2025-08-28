@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// userBaseClient mock
+// gRPC client mock for user-base
 type mockUserBaseClient struct {
 	getUserFunc func(ctx context.Context, in *userbasepb.GetUserRequest, opts ...grpc.CallOption) (*userbasepb.User, error)
 }
@@ -31,6 +31,7 @@ func newAuthServerWithMock(m *mockUserBaseClient) *authServer {
 	return &authServer{userBaseClient: m}
 }
 
+// testing helper, returns the hash bcrypt password for the original one
 func hashPwd(t *testing.T, plain string) string {
 	t.Helper()
 	h, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.MinCost)
@@ -40,6 +41,7 @@ func hashPwd(t *testing.T, plain string) string {
 	return string(h)
 }
 
+// parsing and validating the JWT token
 func parseJWT(t *testing.T, tokenStr string) jwt.MapClaims {
 	t.Helper()
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
@@ -58,147 +60,157 @@ func parseJWT(t *testing.T, tokenStr string) jwt.MapClaims {
 	return claims
 }
 
-// JWT secret for tests
 func init() {
 	jwtSecret = []byte("test-secret")
 }
 
-func TestLogin_InvalidArguments(t *testing.T) {
-	s := newAuthServerWithMock(&mockUserBaseClient{})
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+func TestLogin(t *testing.T) {
+	const (
+		emailOK  = "test@example.com"
+		passOK   = "p@ss"
+		userIDOK = int64(1234)
+	)
 
-	// empty email
-	_, err := s.Login(ctx, &authpb.LoginRequest{Email: "", Password: "x"})
-	if status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("want InvalidArgument, got %v (err=%v)", status.Code(err), err)
-	}
+	hashedOK := hashPwd(t, passOK)
 
-	// empty password
-	_, err = s.Login(ctx, &authpb.LoginRequest{Email: "a@b.com", Password: ""})
-	if status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("want InvalidArgument, got %v (err=%v)", status.Code(err), err)
-	}
-}
-
-func TestLogin_UserNotFound(t *testing.T) {
-	mock := &mockUserBaseClient{
-		getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
-			return nil, status.Error(codes.NotFound, "no such user")
+	tests := []struct {
+		name       string
+		req        *authpb.LoginRequest
+		mockClient *mockUserBaseClient
+		wantCode   codes.Code
+		wantUserID int64
+		checkToken bool
+	}{
+		{
+			name:       "invalid args - empty email",
+			req:        &authpb.LoginRequest{Email: "", Password: "x"},
+			mockClient: &mockUserBaseClient{},
+			wantCode:   codes.InvalidArgument,
+		},
+		{
+			name:       "invalid args - empty password",
+			req:        &authpb.LoginRequest{Email: "a@b.com", Password: ""},
+			mockClient: &mockUserBaseClient{},
+			wantCode:   codes.InvalidArgument,
+		},
+		{
+			name: "user not found",
+			req:  &authpb.LoginRequest{Email: "not@found.com", Password: "anything"},
+			mockClient: &mockUserBaseClient{
+				getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
+					return nil, status.Error(codes.NotFound, "no such user")
+				},
+			},
+			wantCode: codes.NotFound,
+		},
+		{
+			name: "user-base internal error",
+			req:  &authpb.LoginRequest{Email: "x@y.com", Password: "x"},
+			mockClient: &mockUserBaseClient{
+				getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
+					return nil, errors.New("db down")
+				},
+			},
+			wantCode: codes.Internal,
+		},
+		{
+			name: "invalid password",
+			req:  &authpb.LoginRequest{Email: "u@ex.com", Password: "wrong-password"},
+			mockClient: &mockUserBaseClient{
+				getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
+					return &userbasepb.User{
+						Id:       42,
+						Email:    in.Email,
+						Password: hashedOK,
+					}, nil
+				},
+			},
+			wantCode: codes.Unauthenticated,
+		},
+		{
+			name: "success",
+			req:  &authpb.LoginRequest{Email: emailOK, Password: passOK},
+			mockClient: &mockUserBaseClient{
+				getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
+					if in.Email != emailOK {
+						return nil, status.Error(codes.NotFound, "unexpected email in test")
+					}
+					return &userbasepb.User{
+						Id:       userIDOK,
+						Email:    emailOK,
+						Password: hashedOK,
+					}, nil
+				},
+			},
+			wantCode:   codes.OK,
+			wantUserID: userIDOK,
+			checkToken: true,
 		},
 	}
-	s := newAuthServerWithMock(mock)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			s := newAuthServerWithMock(tc.mockClient)
 
-	_, err := s.Login(ctx, &authpb.LoginRequest{Email: "not@found.com", Password: "anything"})
-	if status.Code(err) != codes.NotFound {
-		t.Fatalf("want NotFound, got %v (err=%v)", status.Code(err), err)
-	}
-}
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
 
-func TestLogin_UserBaseInternalError(t *testing.T) {
-	mock := &mockUserBaseClient{
-		getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
-			return nil, errors.New("db down")
-		},
-	}
-	s := newAuthServerWithMock(mock)
+			resp, err := s.Login(ctx, tc.req)
+			if tc.wantCode == codes.OK {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if resp == nil {
+					t.Fatal("expected non-nil response")
+				}
+				if resp.UserId != tc.wantUserID {
+					t.Fatalf("want userID %d, got %d", tc.wantUserID, resp.UserId)
+				}
+				if !tc.checkToken {
+					return
+				}
+				if resp.Token == "" {
+					t.Fatal("expected non-empty token")
+				}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+				claims := parseJWT(t, resp.Token)
 
-	_, err := s.Login(ctx, &authpb.LoginRequest{Email: "x@y.com", Password: "x"})
-	if status.Code(err) != codes.Internal {
-		t.Fatalf("want Internal, got %v (err=%v)", status.Code(err), err)
-	}
-}
+				gotUID, ok := claims["user_id"]
+				if !ok {
+					t.Fatal("token missing user_id claim")
+				}
+				switch v := gotUID.(type) {
+				case float64:
+					if int64(v) != tc.wantUserID {
+						t.Fatalf("want user_id %d, got %v", tc.wantUserID, v)
+					}
+				case int64:
+					if v != tc.wantUserID {
+						t.Fatalf("want user_id %d, got %v", tc.wantUserID, v)
+					}
+				default:
+					t.Fatalf("unexpected user_id type: %T", v)
+				}
 
-func TestLogin_InvalidPassword(t *testing.T) {
-	hashed := hashPwd(t, "correct-password")
-	mock := &mockUserBaseClient{
-		getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
-			return &userbasepb.User{
-				Id:       42,
-				Email:    in.Email,
-				Password: hashed,
-			}, nil
-		},
-	}
-	s := newAuthServerWithMock(mock)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	// checking with a wrong password
-	_, err := s.Login(ctx, &authpb.LoginRequest{Email: "u@ex.com", Password: "wrong-password"})
-	if status.Code(err) != codes.Unauthenticated {
-		t.Fatalf("want Unauthenticated, got %v (err=%v)", status.Code(err), err)
-	}
-}
-
-func TestLogin_Success(t *testing.T) {
-	userID := int64(1234)
-	const email = "test@example.com"
-	const plainPassword = "p@ss"
-
-	hashed := hashPwd(t, plainPassword)
-	mock := &mockUserBaseClient{
-		getUserFunc: func(ctx context.Context, in *userbasepb.GetUserRequest, _ ...grpc.CallOption) (*userbasepb.User, error) {
-			if in.GetEmail() != email {
-				return nil, status.Error(codes.NotFound, "unexpected email in test")
+				expVal, ok := claims["exp"].(float64)
+				if !ok {
+					t.Fatal("token missing exp claim")
+				}
+				exp := time.Unix(int64(expVal), 0)
+				if time.Until(exp) <= 0 {
+					t.Fatalf("token exp is not in the future: %v", exp)
+				}
+				return
 			}
-			return &userbasepb.User{
-				Id:       userID,
-				Email:    email,
-				Password: hashed,
-			}, nil
-		},
-	}
-	s := newAuthServerWithMock(mock)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	resp, err := s.Login(ctx, &authpb.LoginRequest{Email: email, Password: plainPassword})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.UserId != userID {
-		t.Fatalf("want userID %d, got %d", userID, resp.UserId)
-	}
-	if resp.Token == "" {
-		t.Fatal("expected non-empty token")
-	}
-
-	claims := parseJWT(t, resp.Token)
-
-	// user_id
-	gotUID, ok := claims["user_id"]
-	if !ok {
-		t.Fatal("token missing user_id claim")
-	}
-	switch v := gotUID.(type) {
-	case float64:
-		if int64(v) != userID {
-			t.Fatalf("want user_id %d, got %v", userID, v)
-		}
-	case int64:
-		if v != userID {
-			t.Fatalf("want user_id %d, got %v", userID, v)
-		}
-	default:
-		t.Fatalf("unexpected user_id type: %T", v)
-	}
-
-	// exp in future
-	expVal, ok := claims["exp"].(float64)
-	if !ok {
-		t.Fatal("token missing exp claim")
-	}
-	exp := time.Unix(int64(expVal), 0)
-	if time.Until(exp) <= 0 {
-		t.Fatalf("token exp is not in the future: %v", exp)
+			if err == nil {
+				t.Fatalf("expected error code %v, got nil error", tc.wantCode)
+			}
+			st, _ := status.FromError(err)
+			if st.Code() != tc.wantCode {
+				t.Fatalf("want code %v, got %v (err=%v)", tc.wantCode, st.Code(), err)
+			}
+		})
 	}
 }
