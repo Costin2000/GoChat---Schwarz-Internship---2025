@@ -9,14 +9,20 @@ import (
 
 type mockStorage struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
 func (m *mockStorage) requestCreateFriendRequest(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error) {
 	return m.createFriendRequestFunc(ctx, req)
 }
 
+func (m *mockStorage) requestUpdateFriendRequest(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
+	return m.updateFriendRequestFunc(ctx, req)
+}
+
 type StorageMockOptions struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
 func newMockStorageAccess(
@@ -25,13 +31,28 @@ func newMockStorageAccess(
 	createFriendRequestFunc := func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error) {
 		return fixtureFriendRequest(), nil
 	}
-
 	if opts.createFriendRequestFunc != nil {
 		createFriendRequestFunc = opts.createFriendRequestFunc
 	}
 
+	updateFriendRequestFunc := func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
+		return &pb.UpdateFriendRequestResponse{
+			FriendRequest: &pb.FriendRequest{
+				Id:         "1",
+				SenderId:   "111",
+				ReceiverId: "222",
+				Status:     pb.RequestStatus_STATUS_ACCEPTED,
+				CreatedAt:  timestamppb.Now(),
+			},
+		}, nil
+	}
+	if opts.updateFriendRequestFunc != nil {
+		updateFriendRequestFunc = opts.updateFriendRequestFunc
+	}
+
 	return &mockStorage{
 		createFriendRequestFunc: createFriendRequestFunc,
+		updateFriendRequestFunc: updateFriendRequestFunc,
 	}
 }
 
@@ -51,7 +72,6 @@ func NewMockService(opts ServiceMockOptions) *friendRequestService {
 }
 
 func fixtureFriendRequest(mods ...func(*pb.FriendRequest)) *pb.CreateFriendRequestResponse {
-
 	friendReq := &pb.FriendRequest{
 		Id:         "1",
 		SenderId:   "111",

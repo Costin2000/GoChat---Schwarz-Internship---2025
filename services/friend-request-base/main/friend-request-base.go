@@ -32,3 +32,11 @@ func (svc *friendRequestService) CreateFriendRequest(ctx context.Context, req *p
 
 	return friendRequestResp, nil
 }
+
+func (svc *friendRequestService) UpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error) {
+	if req.GetFriendRequest() == nil {
+		return nil, status.Error(codes.InvalidArgument, "friend request cannot be nil")
+	}
+
+	return svc.storageAccess.requestUpdateFriendRequest(ctx, req)
+}

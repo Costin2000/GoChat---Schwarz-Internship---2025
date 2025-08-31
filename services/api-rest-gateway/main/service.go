@@ -110,6 +110,12 @@ func (s *server) CreateFriendRequest(ctx context.Context, req *friendrequestpb.C
 	return s.frClient.CreateFriendRequest(c, req)
 }
 
+func (s *server) UpdateFriendRequest(ctx context.Context, req *friendrequestpb.UpdateFriendRequestRequest) (*friendrequestpb.UpdateFriendRequestResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.frClient.UpdateFriendRequest(c, req)
+}
+
 func (s *server) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
