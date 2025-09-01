@@ -77,7 +77,7 @@ func Test_UpdateFriendRequest(t *testing.T) {
 				r.FriendRequest.Id = ""
 			}),
 			given: given{
-				// simulăm comportamentul storage-ului care validează ID-ul
+				// simulam comportamentul storage-ului care valideaza ID-ul
 				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
 					updateFriendRequestFunc: func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
 						return nil, status.Error(codes.InvalidArgument, "friend request ID is required")
@@ -92,7 +92,7 @@ func Test_UpdateFriendRequest(t *testing.T) {
 				r.FieldMask = &fieldmaskpb.FieldMask{Paths: []string{"sender_id"}}
 			}),
 			given: given{
-				// simulăm validarea din storage pentru field_mask
+				// simulam validarea din storage pentru field_mask
 				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
 					updateFriendRequestFunc: func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
 						return nil, status.Error(codes.InvalidArgument, "only 'status' can be updated")
