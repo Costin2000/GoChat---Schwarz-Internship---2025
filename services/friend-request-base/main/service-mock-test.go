@@ -9,14 +9,20 @@ import (
 
 type mockStorage struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
 func (m *mockStorage) requestCreateFriendRequest(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error) {
 	return m.createFriendRequestFunc(ctx, req)
 }
 
+func (m *mockStorage) requestUpdateFriendRequest(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
+	return m.updateFriendRequestFunc(ctx, req)
+}
+
 type StorageMockOptions struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
 func newMockStorageAccess(
@@ -32,6 +38,7 @@ func newMockStorageAccess(
 
 	return &mockStorage{
 		createFriendRequestFunc: createFriendRequestFunc,
+		updateFriendRequestFunc: opts.updateFriendRequestFunc,
 	}
 }
 
@@ -67,4 +74,24 @@ func fixtureFriendRequest(mods ...func(*pb.FriendRequest)) *pb.CreateFriendReque
 	return &pb.CreateFriendRequestResponse{
 		Request: friendReq,
 	}
+}
+
+func fixtureUpdateFriendResponse(mods ...func(*pb.UpdateFriendRequestResponse)) *pb.UpdateFriendRequestResponse {
+	friendReq := &pb.FriendRequest{
+		Id:         "1",
+		SenderId:   "111",
+		ReceiverId: "222",
+		Status:     pb.RequestStatus_STATUS_ACCEPTED,
+		CreatedAt:  timestamppb.Now(),
+	}
+
+	resp := &pb.UpdateFriendRequestResponse{
+		FriendRequest: friendReq,
+	}
+
+	for _, mod := range mods {
+		mod(resp)
+	}
+
+	return resp
 }

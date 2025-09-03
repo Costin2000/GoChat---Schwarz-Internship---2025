@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
@@ -22,6 +23,7 @@ const (
 
 type StorageAccess interface {
 	requestCreateFriendRequest(ctx context.Context, req *proto.CreateFriendRequestRequest) (*proto.CreateFriendRequestResponse, error)
+	requestUpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error)
 }
 
 type PostgresAccess struct {
@@ -56,7 +58,7 @@ func (pa *PostgresAccess) requestCreateFriendRequest(ctx context.Context, req *p
 	query := `
         INSERT INTO "Friend Requests" (sender_id, receiver_id)
         VALUES ($1, $2)
-        RETURNING created_at;
+        RETURNING id, created_at;
     `
 
 	var requestID int64
@@ -91,4 +93,78 @@ func (pa *PostgresAccess) requestCreateFriendRequest(ctx context.Context, req *p
 		},
 	}, nil
 
+}
+
+func (pa *PostgresAccess) requestUpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error) {
+	if req.FriendRequest == nil {
+		return nil, status.Error(codes.InvalidArgument, "friend request must be provided")
+	}
+
+	// validam field_mask
+	allowed := map[string]bool{"status": true}
+	for _, path := range req.FieldMask.Paths {
+		if !allowed[path] {
+			return nil, status.Errorf(codes.InvalidArgument, "field %s cannot be updated", path)
+		}
+	}
+
+	id, err := strconv.ParseInt(req.FriendRequest.Id, 10, 64)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid friend request ID: %v", err)
+	}
+
+	// mapam enum-ul protobuf la enum-ul postgres
+	var statusStr string
+	switch req.FriendRequest.Status {
+	case proto.RequestStatus_STATUS_PENDING:
+		statusStr = "pending"
+	case proto.RequestStatus_STATUS_ACCEPTED:
+		statusStr = "accepted"
+	case proto.RequestStatus_STATUS_REJECTED:
+		statusStr = "rejected"
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported status value")
+	}
+
+	query := `
+        UPDATE "Friend Requests"
+        SET status = $1
+        WHERE id = $2
+        RETURNING sender_id, receiver_id, status, created_at;
+    `
+
+	var senderID, receiverID int64
+	var statusDB string
+	var createdAt time.Time
+
+	err = pa.db.QueryRowContext(ctx, query, statusStr, id).Scan(&senderID, &receiverID, &statusDB, &createdAt)
+	if err == sql.ErrNoRows {
+		return nil, status.Error(codes.NotFound, "friend request not found")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update friend request: %v", err)
+	}
+
+	// convertim statusul din DB in enum-ul protobuf
+	statusEnum := proto.RequestStatus_STATUS_UNKNOWN
+	switch strings.ToLower(statusDB) {
+	case "pending":
+		statusEnum = proto.RequestStatus_STATUS_PENDING
+	case "accepted":
+		statusEnum = proto.RequestStatus_STATUS_ACCEPTED
+	case "rejected":
+		statusEnum = proto.RequestStatus_STATUS_REJECTED
+	case "blocked":
+		statusEnum = proto.RequestStatus_STATUS_REJECTED // sau STATUS_UNKNOWN
+	}
+
+	return &proto.UpdateFriendRequestResponse{
+		FriendRequest: &proto.FriendRequest{
+			Id:         strconv.FormatInt(id, 10),
+			SenderId:   strconv.FormatInt(senderID, 10),
+			ReceiverId: strconv.FormatInt(receiverID, 10),
+			Status:     statusEnum,
+			CreatedAt:  timestamppb.New(createdAt),
+		},
+	}, nil
 }
