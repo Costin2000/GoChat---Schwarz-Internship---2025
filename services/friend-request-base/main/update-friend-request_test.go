@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"testing"
@@ -107,6 +106,11 @@ func TestUpdateFriendRequest_Integration(t *testing.T) {
 	if err := startDbCmd.Run(); err != nil {
 		t.Fatalf("Error starting DB: %v", err)
 	}
+	defer func() {
+		if err := stopDbCmd.Run(); err != nil {
+			t.Fatalf("Error stopping DB: %v", err)
+		}
+	}()
 
 	// load env
 	envPath := "./../../../db/.env"
@@ -132,14 +136,14 @@ func TestUpdateFriendRequest_Integration(t *testing.T) {
 		t.Fatalf("Failed to ping DB: %v", err)
 	}
 
-	storage := newPostgresAccess(db)
-	s := &friendRequestService{storageAccess: storage}
-
-	// clean tables
+	// cleanup before test
 	db.ExecContext(context.Background(), `DELETE FROM "Friend Requests"`)
 	db.ExecContext(context.Background(), `DELETE FROM "User"`)
 
-	// insert test users
+	storage := newPostgresAccess(db)
+	s := &friendRequestService{storageAccess: storage}
+
+	// insert dummy users
 	var senderID, receiverID int64
 	err = db.QueryRow(`INSERT INTO "User" (first_name, last_name, user_name, email, password) 
 		VALUES ('John', 'Doe', 'johndoe', 'johndoe@example.com', 'secret') RETURNING id`).Scan(&senderID)
@@ -153,19 +157,18 @@ func TestUpdateFriendRequest_Integration(t *testing.T) {
 		t.Fatalf("Failed to insert receiver: %v", err)
 	}
 
-	// create friend request
-	createResp, err := storage.requestCreateFriendRequest(context.Background(), &pb.CreateFriendRequestRequest{
-		SenderId:   fmt.Sprintf("%d", senderID),
-		ReceiverId: fmt.Sprintf("%d", receiverID),
-	})
+	// insert friend request directly in DB
+	var friendRequestID int64
+	err = db.QueryRow(`INSERT INTO "Friend Requests" (sender_id, receiver_id, status, created_at) 
+		VALUES ($1, $2, $3, NOW()) RETURNING id`, senderID, receiverID, "pending").Scan(&friendRequestID)
 	if err != nil {
-		t.Fatalf("Failed to create friend request: %v", err)
+		t.Fatalf("Failed to insert friend request: %v", err)
 	}
 
-	// update friend request to "accepted"
+	// call UpdateFriendRequest to update status to ACCEPTED
 	updateReq := &pb.UpdateFriendRequestRequest{
 		FriendRequest: &pb.FriendRequest{
-			Id:     createResp.Request.Id,
+			Id:     fmt.Sprintf("%d", friendRequestID),
 			Status: pb.RequestStatus_STATUS_ACCEPTED,
 		},
 		FieldMask: &fieldmaskpb.FieldMask{Paths: []string{"status"}},
@@ -180,8 +183,17 @@ func TestUpdateFriendRequest_Integration(t *testing.T) {
 		t.Errorf("Expected status 'ACCEPTED', got %v", updateResp.FriendRequest.Status)
 	}
 
-	// stop DB
-	if err := stopDbCmd.Run(); err != nil {
-		log.Fatalf("Error stopping DB: %v", err)
+	// validate in DB
+	var status string
+	err = db.QueryRow(`SELECT status FROM "Friend Requests" WHERE id = $1`, friendRequestID).Scan(&status)
+	if err != nil {
+		t.Fatalf("Failed to query updated friend request: %v", err)
 	}
+	if status != "accepted" {
+		t.Errorf("Expected DB status 'accepted', got %s", status)
+	}
+
+	// cleanup after test
+	db.ExecContext(context.Background(), `DELETE FROM "Friend Requests"`)
+	db.ExecContext(context.Background(), `DELETE FROM "User"`)
 }
