@@ -32,3 +32,10 @@ func (svc *friendRequestService) CreateFriendRequest(ctx context.Context, req *p
 
 	return friendRequestResp, nil
 }
+
+func (svc *friendRequestService) UpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error) {
+	if req.FriendRequest == nil || req.FriendRequest.Id == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "friend request id must be provided")
+	}
+	return svc.storageAccess.requestUpdateFriendRequest(ctx, req)
+}

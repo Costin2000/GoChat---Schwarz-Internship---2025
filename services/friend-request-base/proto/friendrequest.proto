@@ -3,11 +3,13 @@ syntax = "proto3";
 package friendrequest;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto;proto";
 
 service FriendRequestService {
     rpc CreateFriendRequest (CreateFriendRequestRequest) returns (CreateFriendRequestResponse);
+    rpc UpdateFriendRequest (UpdateFriendRequestRequest) returns (UpdateFriendRequestResponse);
 }
 
 message FriendRequest {
@@ -32,4 +34,13 @@ message CreateFriendRequestRequest {
 
 message CreateFriendRequestResponse {
   FriendRequest request = 1;
+}
+
+message UpdateFriendRequestRequest {
+   FriendRequest friend_request = 1;
+   google.protobuf.FieldMask field_mask = 2; 
+}
+
+message UpdateFriendRequestResponse {
+   FriendRequest friend_request = 1;
 }
