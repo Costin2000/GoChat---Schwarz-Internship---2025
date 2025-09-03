@@ -58,7 +58,7 @@ func (pa *PostgresAccess) requestCreateFriendRequest(ctx context.Context, req *p
 	query := `
         INSERT INTO "Friend Requests" (sender_id, receiver_id)
         VALUES ($1, $2)
-        RETURNING created_at;
+        RETURNING id, created_at;
     `
 
 	var requestID int64
