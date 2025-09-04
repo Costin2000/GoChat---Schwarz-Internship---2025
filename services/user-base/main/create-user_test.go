@@ -16,6 +16,8 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
+	//Added for hash password
+	"golang.org/x/crypto/bcrypt"
 )
 
 func fixtureCreateUserRequest(mods ...func(req *pb.CreateUserRequest)) *pb.CreateUserRequest {
@@ -151,6 +153,9 @@ func TestCreateUser_Integration(t *testing.T) {
 	// Clean table
 	db.ExecContext(context.Background(), `DELETE FROM "User"`)
 
+	//The password is stocked in 'plain' variable, because createUser will empty it for the received object
+	plain := testUser.Password
+
 	resp, err := s.CreateUser(context.Background(), &pb.CreateUserRequest{User: testUser})
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -161,8 +166,18 @@ func TestCreateUser_Integration(t *testing.T) {
 		t.Errorf("Expected email %s, got %s", testUser.Email, resp.User.Email)
 	}
 
-	if resp.User.Password == testUser.Password {
-		t.Errorf("Password should be hashed, but got plain password")
+	//The response should not include the password, not even the hash password
+	if resp.User.Password != "" {
+		t.Errorf("password must not be returned in CreateUser response")
+	}
+
+	//In DB the password should be hashed, and should coresponde with the initial password
+	stored, err := storage.getUserByEmail(context.Background(), testUser.Email)
+	if err != nil {
+		t.Fatalf("failed to fetch user from db: %v", err)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(stored.Password), []byte(plain)); err != nil {
+		t.Fatalf("stored password is not a valid bcrypt hash for the provided password: %v", err)
 	}
 
 	// Stop DB
