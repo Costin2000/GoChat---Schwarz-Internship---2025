@@ -75,14 +75,13 @@ func Test_ListUsers_Postgres(t *testing.T) {
 			},
 			given: given{
 				mock: func(m sqlmock.Sqlmock) {
-					// LIMIT ps+1 = 3
 					m.ExpectQuery(q(`SELECT id, first_name, last_name, user_name, email, created_at FROM "User" WHERE LOWER(first_name) = LOWER($1) AND LOWER(last_name) = LOWER($2) AND "User".id > $3 ORDER BY id ASC LIMIT $4`)).
 						WithArgs("Ana", "Ionescu", int64(10), int64(3)).
 						WillReturnRows(
 							sqlmock.NewRows([]string{"id", "first_name", "last_name", "user_name", "email", "created_at"}).
 								AddRow(int64(11), "Ana", "Ionescu", "ana", "ana@example.com", now).
 								AddRow(int64(12), "Ana", "Ionescu", "ana2", "ana2@example.com", now).
-								AddRow(int64(13), "Ana", "Ionescu", "ana3", "ana3@example.com", now), // extra pt. nextToken
+								AddRow(int64(13), "Ana", "Ionescu", "ana3", "ana3@example.com", now),
 						)
 				},
 			},
@@ -132,7 +131,6 @@ func Test_ListUsers_Postgres(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// special case: invalid token test
 			if tt.name == "invalid token — returns InvalidArgument, no DB hit" {
 				store := &PostgresAccess{db: nil}
 				rsp, err := store.listUsers(context.Background(), tt.req)

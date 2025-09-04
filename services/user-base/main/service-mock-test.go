@@ -9,25 +9,16 @@ import (
 type mockStorage struct {
 	createUserFunc     func(ctx context.Context, user *pb.User) (*pb.User, error)
 	getUserByEmailFunc func(ctx context.Context, email string) (*pb.User, error)
-	// Adding listUsersFunc
-	listUsersFunc func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
+	listUsersFunc      func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
 }
 
 func (m *mockStorage) createUser(ctx context.Context, user *pb.User) (*pb.User, error) {
-	if m.createUserFunc != nil {
-		return m.createUserFunc(ctx, user)
-	}
-	return nil, nil
+	return m.createUserFunc(ctx, user)
 }
 
 func (m *mockStorage) getUserByEmail(ctx context.Context, email string) (*pb.User, error) {
-	if m.getUserByEmailFunc != nil {
-		return m.getUserByEmailFunc(ctx, email)
-	}
-	return nil, nil
+	return m.getUserByEmailFunc(ctx, email)
 }
-
-// Adding listUsers method implementation for mock
 func (m *mockStorage) listUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
 	if m.listUsersFunc != nil {
 		return m.listUsersFunc(ctx, req)
@@ -38,8 +29,7 @@ func (m *mockStorage) listUsers(ctx context.Context, req *pb.ListUsersRequest) (
 type StorageMockOptions struct {
 	createUserFunc     func(ctx context.Context, user *pb.User) (*pb.User, error)
 	getUserByEmailFunc func(ctx context.Context, email string) (*pb.User, error)
-	// Adding listUsersFunc
-	listUsersFunc func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
+	listUsersFunc      func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
 }
 
 func newMockStorageAccess(
@@ -59,18 +49,9 @@ func newMockStorageAccess(
 		getUserByEmailFunc = opts.getUserByEmailFunc
 	}
 
-	// Adding the default function for listUsers
-	listUsersFunc := func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
-		return &pb.ListUsersResponse{Users: []*pb.User{}}, nil
-	}
-	if opts.listUsersFunc != nil {
-		listUsersFunc = opts.listUsersFunc
-	}
-
 	return &mockStorage{
 		createUserFunc:     createUserFunc,
 		getUserByEmailFunc: getUserByEmailFunc,
-		listUsersFunc:      listUsersFunc,
 	}
 }
 

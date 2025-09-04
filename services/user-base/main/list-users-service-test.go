@@ -1,4 +1,3 @@
-// gRPC handler unit tests
 package main
 
 import (
@@ -47,9 +46,7 @@ func Test_ListUsers_Service(t *testing.T) {
 			name: "invalid pageSize (<0) -> InvalidArgument",
 			req:  &pb.ListUsersRequest{PageSize: -1},
 			given: given{
-				mockStorage: newMockStorageAccess(StorageMockOptions{
-					// this will not be called, the handler will be validated before
-				}),
+				mockStorage: newMockStorageAccess(StorageMockOptions{}),
 			},
 			want: want{
 				resp: nil,
