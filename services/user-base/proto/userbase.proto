@@ -7,31 +7,68 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto;proto";
 
 service UserService {
-  // Query a user by their email address
-  rpc GetUser (GetUserRequest) returns (User) {}
+    // Query a user by their email address
+    rpc GetUser (GetUserRequest) returns (User) {}
 
-  // Create a new user
-  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+    // Create a new user
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+
+    // User listing/pagination with simple filters
+    rpc ListUsers (ListUsersRequest) returns (ListUsersResponse) {}
+}
+
+// Representation of a user, it includes 'password' but it will not be exposed in API
+message User {
+    int64 id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string user_name = 4;
+    string email = 5;
+    string password = 6; // do not populate the password in responses
+    google.protobuf.Timestamp created_at = 7;
 }
 
 message GetUserRequest {
-  string email = 1;
-}
-
-message User {
-  int64 id = 1;
-  string first_name = 2;
-  string last_name = 3;
-  string user_name = 4;
-  string email = 5;
-  string password = 6;
-  google.protobuf.Timestamp created_at = 7;
+    string email = 1; // look-up for email
 }
 
 message CreateUserRequest {
-  User user = 1;
+    User user = 1; 
 }
 
 message CreateUserResponse {
-  User user = 1;
+    User user = 1;
+}
+
+// --- ListUsers RPC Messages ---
+
+//List/pagination request
+message ListUsersRequest {
+    string next_page_token = 1;
+    int64 page_size = 2;
+    repeated ListUsersFiltersOneOf filters = 3;
+}
+
+//Response of the list, it will return the complete User without password
+message ListUsersResponse {
+    string next_page_token = 1;
+    repeated User users = 2;
+}
+
+//One single filter `equals` is suported, multiple filters will be combined with AND
+message ListUsersFiltersOneOf {
+    oneof filter {
+        FilterByFirstName first_name = 1;
+        FilterByLastName last_name = 2;
+    }
+}
+
+// Filter first_name == value 
+message FilterByFirstName {
+    string equals = 1;
+}
+
+// Filter last_name == value 
+message FilterByLastName {
+    string equals = 1;
 }
