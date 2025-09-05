@@ -140,12 +140,6 @@ func (s *server) ListUsers(ctx context.Context, req *userbasepb.ListUsersRequest
 	return s.userBaseClient.ListUsers(c, req)
 }
 
-func (s *server) ListFriendRequests(ctx context.Context, req *friendrequestpb.ListFriendRequestsRequest) (*friendrequestpb.ListFriendRequestsResponse, error) {
-	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
-	defer cancel()
-	return s.frClient.ListFriendRequests(c, req)
-}
-
 func env(k, def string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
