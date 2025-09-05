@@ -1,0 +1,71 @@
+BINARY_NAME=./main/aggregator-service
+DOCKER_IMAGE_NAME=aggregator-service
+DOCKER_IMAGE_TAG=latest
+
+PROTO_DIR=./proto
+PROTO_FILE=$(PROTO_DIR)/aggregator.proto
+PROTOC=protoc
+
+GO_OUT=paths=source_relative:$(PROTO_DIR)
+GO_GRPC_OUT=paths=source_relative:$(PROTO_DIR)
+
+M_USERBASE=Mservices/user-base/proto/userbase.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto
+M_FRIENDREQUEST=Mservices/friend-request-base/proto/friendrequest.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto
+
+.PHONY: all proto build run tidy clean up down docker-build docker-run docker-stop test
+
+all: build up down
+
+proto:
+	@echo "==> Generating protobuf files..."
+	$(PROTOC) \
+		-I $(PROTO_DIR) \
+		-I ../.. \
+		--go_out=$(GO_OUT) \
+		--go_opt=$(M_USERBASE) \
+		--go_opt=$(M_FRIENDREQUEST) \
+		--go-grpc_out=$(GO_GRPC_OUT) \
+		--go-grpc_opt=$(M_USERBASE) \
+		--go-grpc_opt=$(M_FRIENDREQUEST) \
+		$(PROTO_FILE)
+
+tidy:
+	@echo "==> Tidying go modules..."
+	go mod tidy
+
+build: clean proto tidy
+	@echo "==> Building local binary..."
+	go build -o $(BINARY_NAME) ./main
+
+run: build
+	@echo "==> Starting local database..."
+	@(cd ./scripts && ./db-start.sh)
+	@echo "==> Running service locally..."
+	@$(BINARY_NAME) & \
+	PID=$$!; \
+	trap "echo '==> Shutting down server...'; kill $$PID; echo '==> Stopping local database...'; (cd ./scripts && ./db-stop.sh)" INT TERM; \
+	echo "Server started with PID: $$PID"; \
+	sleep 2; \
+	wait $$PID;
+    
+clean:
+	@echo "==> Cleaning up compiled files..."
+	rm -f $(BINARY_NAME) $(PROTO_DIR)/*.go
+
+docker-build:
+	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile ../..
+
+docker-run:
+	@echo "==> Running Docker container..."
+	docker run -p 50051:50051 --rm --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+
+down:
+	@echo "==> Stopping Docker container..."
+	docker stop $(DOCKER_IMAGE_NAME) || true
+
+up: docker-build docker-run
+
+test:
+	@echo "==> Running tests for main package..."
+	@go test ./main -v

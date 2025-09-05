@@ -70,6 +70,25 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  aggregator:
+    build:
+      context: .
+      dockerfile: ./services/aggregator/Dockerfile
+    container_name: aggregator-service
+    environment:
+      - ENV=docker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
+    ports:
+      - "50054:50054"
+    networks:
+      - microservices-net
+    depends_on:
+      - user-base
+      - friend-request-base
   
   api-rest-gateway:
     build:
