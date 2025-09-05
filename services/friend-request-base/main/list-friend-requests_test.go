@@ -197,38 +197,24 @@ func TestListFriendRequests_Unit(t *testing.T) {
 			},
 		},
 		{
-			name: "page size less than default",
+			name: "page size less than default - should return InvalidArgument",
 			req: fixtureListFriendRequestsRequest(func(req *frproto.ListFriendRequestsRequest) {
 				req.PageSize = 5 // less than defaultPageSize
 			}),
-			given: given{
-				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
-					listFriendRequestsFunc: func(ctx context.Context, req *frproto.ListFriendRequestsRequest) (*frproto.ListFriendRequestsResponse, error) {
-						return successfulResponse, nil
-					},
-				}),
-			},
 			expected: expected{
-				resp:            successfulResponse,
-				err:             nil,
+				resp:            nil,
+				err:             errchecks.HasStatusCode(codes.InvalidArgument),
 				storagePageSize: defaultPageSize, // expect adjustment to 10
 			},
 		},
 		{
 			name: "bad page size",
 			req: fixtureListFriendRequestsRequest(func(req *frproto.ListFriendRequestsRequest) {
-				req.PageSize = -1 // bad page size specified
+				req.PageSize = -1 // Invalid page size
 			}),
-			given: given{
-				mockStorageAccess: newMockStorageAccess(StorageMockOptions{
-					listFriendRequestsFunc: func(ctx context.Context, req *frproto.ListFriendRequestsRequest) (*frproto.ListFriendRequestsResponse, error) {
-						return successfulResponse, nil
-					},
-				}),
-			},
 			expected: expected{
-				resp:            successfulResponse,
-				err:             nil,
+				resp:            nil,
+				err:             errchecks.HasStatusCode(codes.InvalidArgument),
 				storagePageSize: defaultPageSize, // expect adjustment to 10
 			},
 		},

@@ -43,8 +43,7 @@ service GatewayService {
 
     rpc ListFriendRequests(friendrequest.ListFriendRequestsRequest) returns (friendrequest.ListFriendRequestsResponse) {
         option (google.api.http) = {
-            get: "/v1/friend-request/list-friend-requests"
-            body: "*"
+            get: "/v1/friend-requests"
         };
     }
 
