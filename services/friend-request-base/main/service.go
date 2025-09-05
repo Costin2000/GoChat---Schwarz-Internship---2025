@@ -116,12 +116,9 @@ func main() {
 	reflection.Register(grpcServer)
 
 	fmt.Println("Friend Request gRPC server listening on :50052...")
-	fmt.Println("Friend Request gRPC server listening on :50052...")
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+
 }

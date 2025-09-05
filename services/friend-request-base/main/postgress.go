@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +25,7 @@ const (
 
 type StorageAccess interface {
 	requestCreateFriendRequest(ctx context.Context, req *proto.CreateFriendRequestRequest) (*proto.CreateFriendRequestResponse, error)
+	listFriendRequests(ctx context.Context, req *proto.ListFriendRequestsRequest) (*proto.ListFriendRequestsResponse, error)
 	requestUpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error)
 }
 
@@ -35,15 +38,8 @@ func newPostgresAccess(db *sql.DB) *PostgresAccess {
 }
 
 func (pa *PostgresAccess) requestCreateFriendRequest(ctx context.Context, req *proto.CreateFriendRequestRequest) (*proto.CreateFriendRequestResponse, error) {
-	senderIDStr := req.GetSenderId()
-	receiverIDStr := req.GetReceiverId()
-
-	if senderIDStr == "" || receiverIDStr == "" {
-		return nil, errors.New("sender and receiver IDs cannot be empty")
-	}
-	if senderIDStr == receiverIDStr {
-		return nil, errors.New("sender and receiver cannot be the same user")
-	}
+	senderIDStr := req.SenderId
+	receiverIDStr := req.ReceiverId
 
 	senderID, err := strconv.ParseInt(senderIDStr, 10, 64)
 	if err != nil {
@@ -93,6 +89,98 @@ func (pa *PostgresAccess) requestCreateFriendRequest(ctx context.Context, req *p
 		},
 	}, nil
 
+}
+
+func (pa *PostgresAccess) listFriendRequests(ctx context.Context, req *proto.ListFriendRequestsRequest) (*proto.ListFriendRequestsResponse, error) {
+
+	// Creating the db query via formatted string - argument list pair to ensure protection against SQL Injection
+	var args []any
+	var query bytes.Buffer
+	argCounter := 1
+
+	query.WriteString(`SELECT id, sender_id, receiver_id, status, created_at FROM "Friend Requests" WHERE 1=1`)
+
+	// Iterate through the fields; frontend should always set the receiver id field to the requesting user's id to ensure not showing all requests in the system
+	for _, fil := range req.Filters {
+		switch filterTyped := fil.Filter.(type) {
+		case *proto.ListFriendRequestsFiltersOneOf_ReceiverId:
+			receiverId, err := strconv.ParseInt(filterTyped.ReceiverId, 10, 64)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid receiver_id filter format: %v", err)
+			}
+			query.WriteString(fmt.Sprintf(" AND receiver_id = $%d", argCounter))
+			args = append(args, receiverId)
+			argCounter++
+		case *proto.ListFriendRequestsFiltersOneOf_SenderId:
+			senderId, err := strconv.ParseInt(filterTyped.SenderId, 10, 64)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sender_id filter format: %v", err)
+			}
+			query.WriteString(fmt.Sprintf(" AND sender_id = $%d", argCounter))
+			args = append(args, senderId)
+			argCounter++
+		case *proto.ListFriendRequestsFiltersOneOf_Status:
+			query.WriteString(fmt.Sprintf(" AND status = $%d", argCounter))
+			args = append(args, filterTyped.Status)
+			argCounter++
+		}
+	}
+
+	// If the user is requesting the FR's for the first time in the session, the frontend should send an empty nextPageToken. Afterwards the frontend should return the last received nextPageToken back to the server
+	if req.NextPageToken != "" {
+		nextPageTokenId, err := strconv.ParseInt(req.NextPageToken, 10, 64)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid nextPageToken format: %v", err)
+		}
+		query.WriteString(fmt.Sprintf(" AND id > $%d", argCounter))
+		args = append(args, nextPageTokenId)
+		argCounter++
+	}
+
+	// Always sort id's in ascending order to ensure the same request is never showed again on different pages
+	query.WriteString(fmt.Sprintf(" ORDER BY id ASC LIMIT $%d", argCounter))
+	args = append(args, req.PageSize)
+	rows, err := pa.db.QueryContext(ctx, query.String(), args...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "database query failed: %v", err)
+	}
+
+	var lastReqId int64
+	var requests []*proto.FriendRequest
+	for rows.Next() {
+		var fr proto.FriendRequest
+		var senderID, receiverID int64
+		var createdAt time.Time
+		var statusStr string
+
+		if err := rows.Scan(&lastReqId, &senderID, &receiverID, &statusStr, &createdAt); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to scan row: %v", err)
+		}
+
+		fr.Id = strconv.FormatInt(lastReqId, 10)
+		fr.SenderId = strconv.FormatInt(senderID, 10)
+		fr.ReceiverId = strconv.FormatInt(receiverID, 10)
+		fr.CreatedAt = timestamppb.New(createdAt)
+
+		enumKey := fmt.Sprintf("STATUS_%s", strings.ToUpper(statusStr))
+		if val, ok := proto.RequestStatus_value[enumKey]; ok {
+			fr.Status = proto.RequestStatus(val)
+		} else {
+			fr.Status = proto.RequestStatus_STATUS_UNKNOWN // fallback
+		}
+
+		requests = append(requests, &fr)
+	}
+
+	var nextPageToken string = ""
+	if len(requests) == int(req.PageSize) {
+		nextPageToken = strconv.FormatInt(lastReqId, 10)
+	}
+
+	return &proto.ListFriendRequestsResponse{
+		NextPageToken: nextPageToken,
+		Requests:      requests,
+	}, nil
 }
 
 func (pa *PostgresAccess) requestUpdateFriendRequest(ctx context.Context, req *proto.UpdateFriendRequestRequest) (*proto.UpdateFriendRequestResponse, error) {

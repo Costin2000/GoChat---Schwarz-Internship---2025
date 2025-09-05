@@ -1,5 +1,6 @@
 services/*/proto/*.go
 services/*/main/*-service
 db-data
-.env
+db/.env
+devtest-db/.env
 .vscode

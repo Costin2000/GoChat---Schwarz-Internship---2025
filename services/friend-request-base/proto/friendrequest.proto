@@ -9,6 +9,7 @@ option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/se
 
 service FriendRequestService {
     rpc CreateFriendRequest (CreateFriendRequestRequest) returns (CreateFriendRequestResponse);
+    rpc ListFriendRequests (ListFriendRequestsRequest) returns (ListFriendRequestsResponse);
     rpc UpdateFriendRequest (UpdateFriendRequestRequest) returns (UpdateFriendRequestResponse);
 }
 
@@ -34,6 +35,25 @@ message CreateFriendRequestRequest {
 
 message CreateFriendRequestResponse {
   FriendRequest request = 1;
+}
+
+message ListFriendRequestsRequest {   
+   string nextPageToken = 1;
+   int64 pageSize = 2;
+   repeated ListFriendRequestsFiltersOneOf filters= 3;
+ }
+
+message ListFriendRequestsResponse {   
+  string nextPageToken = 1;
+  repeated FriendRequest requests = 2; 
+}
+
+message ListFriendRequestsFiltersOneOf {
+  oneof filter {
+    string receiver_id = 1;
+    string sender_id = 2; 
+    string status = 3;   
+  }
 }
 
 message UpdateFriendRequestRequest {
