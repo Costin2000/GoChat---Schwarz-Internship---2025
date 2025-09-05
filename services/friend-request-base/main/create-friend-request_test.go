@@ -25,7 +25,7 @@ func fixtureCreateFriendRequest(mods ...func(req *pb.CreateFriendRequestRequest)
 
 func fixtureCreateFriendResponse(mods ...func(req *pb.CreateFriendRequestResponse)) *pb.CreateFriendRequestResponse {
 	friendReqRsp := &pb.CreateFriendRequestResponse{
-		Request: fixtureFriendRequest().Request,
+		Request: fixtureCreateFriendRequestResponse().Request,
 	}
 
 	for _, mod := range mods {

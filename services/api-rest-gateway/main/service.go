@@ -128,10 +128,22 @@ func (s *server) CreateUser(ctx context.Context, req *userbasepb.CreateUserReque
 	return s.userBaseClient.CreateUser(c, req)
 }
 
+func (s *server) ListFriendRequests(ctx context.Context, req *friendrequestpb.ListFriendRequestsRequest) (*friendrequestpb.ListFriendRequestsResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.frClient.ListFriendRequests(c, req)
+}
+
 func (s *server) ListUsers(ctx context.Context, req *userbasepb.ListUsersRequest) (*userbasepb.ListUsersResponse, error) {
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
 	return s.userBaseClient.ListUsers(c, req)
+}
+
+func (s *server) ListFriendRequests(ctx context.Context, req *friendrequestpb.ListFriendRequestsRequest) (*friendrequestpb.ListFriendRequestsResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.frClient.ListFriendRequests(c, req)
 }
 
 func env(k, def string) string {

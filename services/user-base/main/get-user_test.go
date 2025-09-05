@@ -135,7 +135,7 @@ func TestGetUser_Integration(t *testing.T) {
 	}
 
 	// db connection
-	envPath := "./../../../db/.env"
+	envPath := "./../../../devtest-db/.env"
 
 	if err := loadEnv(envPath); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)

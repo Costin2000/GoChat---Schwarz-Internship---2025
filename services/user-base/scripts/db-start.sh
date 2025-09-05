@@ -5,8 +5,8 @@ echo "Starting local DB setup for devtesting..."
 
 # load Environment Variables
 # ------------------------------------
-if [ -f ./../../../db/.env ]; then
-  export $(grep -v '^#' ./../../../db/.env | xargs)
+if [ -f ./../../../devtest-db/.env ]; then
+  export $(grep -v '^#' ./../../../devtest-db/.env | xargs)
   echo "Loaded configuration from .env file."
 else
   echo "Error: .env file not found. Please review your workspace."
@@ -14,7 +14,7 @@ else
 fi
 
 # check for the init.sql file
-if [ ! -f ./../../../db/init.sql ]; then
+if [ ! -f ./../../../devtest-db/init.sql ]; then
     echo "Error: init.sql file not found in the current directory."
     exit 1
 fi
@@ -65,7 +65,7 @@ else
 fi
 
 # execute the init.sql script against the new database
-psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f ./../../../db/init.sql
+psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f ./../../../devtest-db/init.sql
 echo "Successfully executed init.sql to set up schema and data."
 
 

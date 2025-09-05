@@ -9,11 +9,16 @@ import (
 
 type mockStorage struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	listFriendRequestsFunc  func(ctx context.Context, req *pb.ListFriendRequestsRequest) (*pb.ListFriendRequestsResponse, error)
 	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
 func (m *mockStorage) requestCreateFriendRequest(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error) {
 	return m.createFriendRequestFunc(ctx, req)
+}
+
+func (m *mockStorage) listFriendRequests(ctx context.Context, req *pb.ListFriendRequestsRequest) (*pb.ListFriendRequestsResponse, error) {
+	return m.listFriendRequestsFunc(ctx, req)
 }
 
 func (m *mockStorage) requestUpdateFriendRequest(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error) {
@@ -22,22 +27,33 @@ func (m *mockStorage) requestUpdateFriendRequest(ctx context.Context, req *pb.Up
 
 type StorageMockOptions struct {
 	createFriendRequestFunc func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error)
+	listFriendRequestsFunc  func(ctx context.Context, req *pb.ListFriendRequestsRequest) (*pb.ListFriendRequestsResponse, error)
 	updateFriendRequestFunc func(ctx context.Context, req *pb.UpdateFriendRequestRequest) (*pb.UpdateFriendRequestResponse, error)
 }
 
-func newMockStorageAccess(
-	opts StorageMockOptions,
-) StorageAccess {
+func newMockStorageAccess(opts StorageMockOptions) StorageAccess {
+
 	createFriendRequestFunc := func(ctx context.Context, req *pb.CreateFriendRequestRequest) (*pb.CreateFriendRequestResponse, error) {
-		return fixtureFriendRequest(), nil
+		return fixtureCreateFriendRequestResponse(), nil
+	}
+	listFriendRequestsFunc := func(ctx context.Context, req *pb.ListFriendRequestsRequest) (*pb.ListFriendRequestsResponse, error) {
+		return &pb.ListFriendRequestsResponse{ // Implement this in the actual test
+			NextPageToken: "",
+			Requests:      []*pb.FriendRequest{},
+		}, nil
 	}
 
 	if opts.createFriendRequestFunc != nil {
 		createFriendRequestFunc = opts.createFriendRequestFunc
 	}
 
+	if opts.listFriendRequestsFunc != nil {
+		listFriendRequestsFunc = opts.listFriendRequestsFunc
+	}
+
 	return &mockStorage{
 		createFriendRequestFunc: createFriendRequestFunc,
+		listFriendRequestsFunc:  listFriendRequestsFunc,
 		updateFriendRequestFunc: opts.updateFriendRequestFunc,
 	}
 }
@@ -57,7 +73,7 @@ func NewMockService(opts ServiceMockOptions) *friendRequestService {
 	}
 }
 
-func fixtureFriendRequest(mods ...func(*pb.FriendRequest)) *pb.CreateFriendRequestResponse {
+func fixtureCreateFriendRequestResponse(mods ...func(*pb.FriendRequest)) *pb.CreateFriendRequestResponse {
 
 	friendReq := &pb.FriendRequest{
 		Id:         "1",

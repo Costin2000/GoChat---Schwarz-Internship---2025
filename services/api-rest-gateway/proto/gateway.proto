@@ -38,6 +38,12 @@ service GatewayService {
     rpc UpdateFriendRequest(friendrequest.UpdateFriendRequestRequest) returns (friendrequest.UpdateFriendRequestResponse) {
         option (google.api.http) = {
             patch: "/v1/friend-request/{friend_request.id}"
+        };
+    }
+
+    rpc ListFriendRequests(friendrequest.ListFriendRequestsRequest) returns (friendrequest.ListFriendRequestsResponse) {
+        option (google.api.http) = {
+            get: "/v1/friend-request/list-friend-requests"
             body: "*"
         };
     }
