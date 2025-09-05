@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package aggregator;
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto;proto";
+
+import "services/user-base/proto/userbase.proto";
+
+service AggregatorService {
+  rpc FetchUserFriends(FetchUserFriendsRequest) returns (FetchUserFriendsResponse);
+}
+
+message FetchUserFriendsRequest {
+  string user_id = 1;
+}
+
+message FetchUserFriendsResponse {
+  repeated user_base.User friends = 1;
+}
