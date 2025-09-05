@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 )
 
 type mockStorage struct {
 	createUserFunc     func(ctx context.Context, user *pb.User) (*pb.User, error)
 	getUserByEmailFunc func(ctx context.Context, email string) (*pb.User, error)
+	listUsersFunc      func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
 }
 
 func (m *mockStorage) createUser(ctx context.Context, user *pb.User) (*pb.User, error) {
@@ -17,10 +19,17 @@ func (m *mockStorage) createUser(ctx context.Context, user *pb.User) (*pb.User, 
 func (m *mockStorage) getUserByEmail(ctx context.Context, email string) (*pb.User, error) {
 	return m.getUserByEmailFunc(ctx, email)
 }
+func (m *mockStorage) listUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
+	if m.listUsersFunc != nil {
+		return m.listUsersFunc(ctx, req)
+	}
+	return nil, nil
+}
 
 type StorageMockOptions struct {
 	createUserFunc     func(ctx context.Context, user *pb.User) (*pb.User, error)
 	getUserByEmailFunc func(ctx context.Context, email string) (*pb.User, error)
+	listUsersFunc      func(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error)
 }
 
 func newMockStorageAccess(

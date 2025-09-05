@@ -41,4 +41,12 @@ service GatewayService {
             body: "*"
         };
     }
+
+  rpc ListUsers(user_base.ListUsersRequest) returns (user_base.ListUsersResponse) {
+      option (google.api.http) = {
+          post: "/v1/users:list"
+          body: "*"
+      };
+  }
 }
+
