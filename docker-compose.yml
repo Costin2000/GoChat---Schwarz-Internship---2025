@@ -17,6 +17,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   auth:
     build:
@@ -44,12 +62,15 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_PORT=${DB_PORT}
+      - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
     ports:
       - "50051:50051"
     networks:
       - microservices-net
     depends_on:
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   friend-request-base:
@@ -91,6 +112,23 @@ services:
       - user-base
       - friend-request-base
 
+  email:
+    build:
+      context: .
+      dockerfile: ./services/email/Dockerfile
+    container_name: email-service
+    restart: always
+    environment:
+      - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    networks:
+      - microservices-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
 networks:
   microservices-net:

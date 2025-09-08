@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
@@ -27,6 +28,14 @@ func (svc *UserService) CreateUser(ctx context.Context, req *pb.CreateUserReques
 	user, err := svc.storageAccess.createUser(ctx, req.User)
 	if err != nil {
 		return nil, err
+	}
+
+	if svc.emailPub != nil {
+		_ = svc.emailPub.Publish(ctx, EmailMessage{
+			To:      user.Email,
+			Subject: "Welcome to GoChat",
+			Body:    fmt.Sprintf("Hi %s, \n\nYour account was created successfully. Enjoy the experience!\n\n- GoChat Team", user.FirstName),
+		})
 	}
 
 	return &pb.CreateUserResponse{

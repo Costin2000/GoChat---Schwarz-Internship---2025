@@ -4,3 +4,4 @@ db-data
 db/.env
 devtest-db/.env
 .vscode
+.env

@@ -8,6 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/jackc/pgx/v5 v5.7.5
+	github.com/rabbitmq/amqp091-go v1.10.0
 	golang.org/x/crypto v0.41.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250811230008-5f3141c8851a
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b
