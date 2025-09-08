@@ -13,6 +13,7 @@ GOPATH_DIR=$(shell go env GOPATH)
 GOOGLEAPIS=$(GOPATH_DIR)/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@*/third_party/googleapis
 M_AUTH=Mservices/auth/proto/auth.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto
 M_FRIENDREQUEST=Mservices/friend-request-base/proto/friendrequest.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto
+M_AGGR=Mservices/aggregator/proto/aggregator.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto
 
 .PHONY: all proto build run tidy up down docker-build docker-run
 
@@ -30,12 +31,15 @@ proto:
 		--go_out=$(GO_OUT) \
 		--go_opt=$(M_AUTH) \
 		--go_opt=$(M_FRIENDREQUEST) \
+		--go_opt=$(M_AGGR) \
 		--go-grpc_out=$(GO_GRPC_OUT) \
 		--go-grpc_opt=$(M_AUTH) \
 		--go-grpc_opt=$(M_FRIENDREQUEST) \
+		--go-grpc_opt=$(M_AGGR) \
 		--grpc-gateway_out=$(GW_OUT) \
 		--grpc-gateway_opt=$(M_AUTH) \
 		--grpc-gateway_opt=$(M_FRIENDREQUEST) \
+		--grpc-gateway_opt=$(M_AGGR) \
 		$(PROTO_FILE)
 
 tidy:
@@ -49,7 +53,7 @@ build: proto tidy
 run:
 	@echo "==> Running service locally..."
 	# Note: This recipe assumes the auth and friend-request services are already running.
-	GATEWAY_HTTP_ADDR=:8080 USER_BASE_ADDR=localhost:50051 AUTH_ADDR=localhost:50053 FRIEND_REQUEST_ADDR=localhost:50052 go run ./main
+	GATEWAY_HTTP_ADDR=:8080 USER_BASE_ADDR=localhost:50051 AUTH_ADDR=localhost:50053 FRIEND_REQUEST_ADDR=localhost:50052 AGGR_REQUEST_ADDR=50054 go run ./main
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."

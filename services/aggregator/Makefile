@@ -58,7 +58,7 @@ docker-build:
 
 docker-run:
 	@echo "==> Running Docker container..."
-	docker run -p 50051:50051 --rm --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	docker run -p 50054:50054 --rm --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 
 down:
 	@echo "==> Stopping Docker container..."

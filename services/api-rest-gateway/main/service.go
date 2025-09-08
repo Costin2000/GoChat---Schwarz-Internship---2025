@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	aggrpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto"
 	gatewaypb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto"
 	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	friendrequestpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
@@ -25,6 +26,7 @@ type server struct {
 	authClient     authpb.AuthServiceClient
 	frClient       friendrequestpb.FriendRequestServiceClient
 	userBaseClient userbasepb.UserServiceClient
+	aggrClient     aggrpb.AggregatorServiceClient
 	upstreamTO     time.Duration
 }
 
@@ -33,6 +35,7 @@ func main() {
 	authAddr := env("AUTH_ADDR", "auth:50053")
 	friendRequestAddr := env("FRIEND_REQUEST_ADDR", "friend-request:50052")
 	userBaseAddr := env("USER_BASE_ADDR", "user-base:50051")
+	aggrReqAddr := env("AGGR_REQUEST_ADDR", "aggregator:50054")
 	upstreamTimeout := durEnv("UPSTREAM_REQUEST_TIMEOUT", 5*time.Second)
 
 	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -47,10 +50,15 @@ func main() {
 	check(err, "dial friend request service")
 	defer frConn.Close()
 
+	aggrConn, err := grpc.NewClient(aggrReqAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial friend request service")
+	defer aggrConn.Close()
+
 	s := &server{
 		authClient:     authpb.NewAuthServiceClient(authConn),
 		frClient:       friendrequestpb.NewFriendRequestServiceClient(frConn),
 		userBaseClient: userbasepb.NewUserServiceClient(userBaseConn),
+		aggrClient:     aggrpb.NewAggregatorServiceClient(aggrConn),
 		upstreamTO:     upstreamTimeout,
 	}
 
@@ -138,6 +146,12 @@ func (s *server) ListUsers(ctx context.Context, req *userbasepb.ListUsersRequest
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
 	return s.userBaseClient.ListUsers(c, req)
+}
+
+func (s *server) FetchUserFriends(ctx context.Context, req *aggrpb.FetchUserFriendsRequest) (*aggrpb.FetchUserFriendsResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.aggrClient.FetchUserFriends(c, req)
 }
 
 func env(k, def string) string {

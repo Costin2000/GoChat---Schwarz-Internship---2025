@@ -5,6 +5,7 @@ option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/se
 
 import "google/api/annotations.proto";
 import "services/auth/proto/auth.proto";
+import "services/aggregator/proto/aggregator.proto";
 import "services/user-base/proto/userbase.proto";
 import "services/friend-request-base/proto/friendrequest.proto";
 service GatewayService {
@@ -47,11 +48,17 @@ service GatewayService {
         };
     }
 
-  rpc ListUsers(user_base.ListUsersRequest) returns (user_base.ListUsersResponse) {
+    rpc ListUsers(user_base.ListUsersRequest) returns (user_base.ListUsersResponse) {
       option (google.api.http) = {
           post: "/v1/users:list"
           body: "*"
-      };
-  }
+        };
+    }
+
+    rpc FetchUserFriends(aggregator.FetchUserFriendsRequest) returns (aggregator.FetchUserFriendsResponse) {
+        option (google.api.http) = {
+            get: "/v1/friends"
+        };
+    }
 }
 

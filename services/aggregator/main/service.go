@@ -1,124 +1,75 @@
 package main
 
 import (
-	"bufio"
-	"database/sql"
-	"fmt"
+	"context"
 	"log"
 	"net"
-	"os"
-	"path/filepath"
-	"strings"
 
 	aggrpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	frpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
+	userpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
-const port = ":50054"
+const (
+	aggrPort = ":50054"
+	frAddr   = "localhost:50052"
+	userAddr = "localhost:50051"
+)
 
 type AggregatorService struct {
-	storageAccess StorageAccess
 	aggrpb.UnimplementedAggregatorServiceServer
-}
-
-// retrieve db setup from the .env file
-func loadEnv(filename string) error {
-
-	file, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// ignore empty lines and comments
-		if len(line) == 0 || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		envs := strings.SplitN(line, "=", 2)
-		if len(envs) != 2 {
-			continue // skip bad lines
-		}
-
-		key := strings.TrimSpace(envs[0])
-		value := strings.TrimSpace(envs[1])
-
-		// Set the environment variable
-		if err := os.Setenv(key, value); err != nil {
-			log.Printf("Warning: could not set env var %s: %v", key, err)
-		}
-	}
-
-	return scanner.Err()
+	frClient       frpb.FriendRequestServiceClient
+	userBaseClient userpb.UserServiceClient
 }
 
 func main() {
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Could not get current working directory: %v", err)
-	}
-
-	envPath := "./db/.env" // db env path from root
-	if filepath.Base(wd) == "aggregator" {
-		envPath = "./../../db/.env" // db env path from user-base service directory
-	}
-
-	// db connection
-	if err := loadEnv(envPath); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
-
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
-	dbName := os.Getenv("POSTGRES_DB")
-	dbPort := os.Getenv("DB_PORT")
-
-	var dbHost string
-	if os.Getenv("ENV") == "docker" {
-		dbHost = "postgres-db"
-	} else {
-		dbHost = os.Getenv("DB_HOST")
-	}
-
-	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
-	db, err := sql.Open("pgx", connStr)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
-	log.Println("Successfully connected to PostgreSQL database.")
-
 	// network connection
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", aggrPort)
 	if err != nil {
-		log.Fatalf("Error polling port %s %v", port, err)
+		log.Fatalf("Error polling aggrPort %s %v", aggrPort, err)
 	}
 
-	// server connections
-	storage := newPostgresAccess(db)
-	aggregator := &AggregatorService{
-		storageAccess: storage,
+	// user and friend-request client connections
+	userConn, err := grpc.NewClient(userAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial user-base")
+	defer userConn.Close()
+
+	frConn, err := grpc.NewClient(frAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial friend request service")
+	defer frConn.Close()
+
+	aggrSvc := &AggregatorService{
+		frClient:       frpb.NewFriendRequestServiceClient(frConn),
+		userBaseClient: userpb.NewUserServiceClient(userConn),
 	}
 
 	grpcServer := grpc.NewServer()
 
-	aggrpb.RegisterAggregatorServiceServer(grpcServer, aggregator)
+	aggrpb.RegisterAggregatorServiceServer(grpcServer, aggrSvc)
 	reflection.Register(grpcServer)
 
-	log.Printf("gRPC polling on port %s...", port)
+	log.Printf("gRPC polling on aggrPort %s...", aggrPort)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
+}
+
+func check(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %v", msg, err)
+	}
+}
+
+func (s *AggregatorService) ListFriendRequests(ctx context.Context, req *frpb.ListFriendRequestsRequest) (*frpb.ListFriendRequestsResponse, error) {
+	return s.frClient.ListFriendRequests(ctx, req)
+}
+
+func (s *AggregatorService) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
+	return s.userBaseClient.ListUsers(ctx, req)
 }
