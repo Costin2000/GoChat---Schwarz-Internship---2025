@@ -9,11 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const port = ":50051"
@@ -21,6 +24,7 @@ const port = ":50051"
 type UserService struct {
 	storageAccess StorageAccess
 	pb.UnimplementedUserServiceServer
+	emailPub EmailPublisher
 }
 
 // retrieve db setup from the .env file
@@ -99,6 +103,28 @@ func main() {
 	}
 	log.Println("Successfully connected to PostgreSQL database.")
 
+	// Initialze RabbitMQ publisher
+	rmqAddr := os.Getenv("RABBITMQ_ADDR")
+	var emailPub EmailPublisher
+	if rmqAddr != "" {
+		conn, err := connectToRabbitMQWithRetries(rmqAddr)
+		if err != nil {
+			log.Printf("WARN: cannot connect to RabbitMQ (%s): %v (CreatUser will work, but no emails published)", rmqAddr, err)
+		} else {
+			defer conn.Close()
+			pub, err := newAmqpEmailPublisher(conn)
+			if err != nil {
+				log.Printf("WARN: cannot create email publisher: %v", err)
+			} else {
+				defer pub.Close()
+				emailPub = pub
+				log.Println("Connected to RabbitMQ and email publisher ready!")
+			}
+		}
+	} else {
+		log.Println("WARN: RABBITMQ_ADDR not set; emails will not be published")
+	}
+
 	// network connection
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -109,6 +135,7 @@ func main() {
 	storage := newPostgresAccess(db)
 	UserBaseServer := &UserService{
 		storageAccess: storage,
+		emailPub:      emailPub,
 	}
 
 	grpcServer := grpc.NewServer()
@@ -120,4 +147,22 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
+}
+
+func connectToRabbitMQWithRetries(addr string) (*amqp.Connection, error) {
+	var conn *amqp.Connection
+	var err error
+	maxRetries := 10
+	backoff := 3 * time.Second
+
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(addr)
+		if err == nil {
+			log.Println("user-base: connected to RabbitMQ")
+			return conn, nil
+		}
+		log.Printf("user-base: cannot connect to RabbitMQ, retrying in %v... (%d/%d)", backoff, i, maxRetries)
+		time.Sleep(backoff)
+	}
+	return nil, err
 }

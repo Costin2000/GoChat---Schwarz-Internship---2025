@@ -72,7 +72,7 @@ func main() {
 	httpMux := http.NewServeMux()
 	httpMux.Handle("/healthz", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
 	httpMux.Handle("/readyz", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
-	httpMux.Handle("/", withLogging(withCORS(withTimeout(mux, upstreamTimeout))))
+	httpMux.Handle("/", withLogging(withCORS(withAuth(withTimeout(mux, upstreamTimeout)))))
 
 	srv := &http.Server{
 		Addr:              httpAddr,
