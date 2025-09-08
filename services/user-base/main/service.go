@@ -103,6 +103,7 @@ func main() {
 	}
 	log.Println("Successfully connected to PostgreSQL database.")
 
+	// Initialze RabbitMQ publisher
 	rmqAddr := os.Getenv("RABBITMQ_ADDR")
 	var emailPub EmailPublisher
 	if rmqAddr != "" {

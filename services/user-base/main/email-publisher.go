@@ -26,6 +26,7 @@ type amqpEmailPublisher struct {
 	queue string
 }
 
+// building AMQP publisher from connection
 func newAmqpEmailPublisher(conn *amqp.Connection) (EmailPublisher, error) {
 	ch, err := conn.Channel()
 	if err != nil {
@@ -42,6 +43,7 @@ func newAmqpEmailPublisher(conn *amqp.Connection) (EmailPublisher, error) {
 	}, nil
 }
 
+// publish email message to queue
 func (p *amqpEmailPublisher) Publish(ctx context.Context, msg EmailMessage) error {
 	body, err := json.Marshal(msg)
 	if err != nil {

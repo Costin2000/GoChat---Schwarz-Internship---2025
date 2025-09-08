@@ -54,6 +54,7 @@ func main() {
 		log.Fatalf("Failed to declare a queue: %v", err)
 	}
 
+	// start consuming messages from the queue
 	msgs, err := ch.Consume(q.Name, "", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("Failed to register a consumer: %v", err)
@@ -62,6 +63,8 @@ func main() {
 	log.Println(" [*] Waiting for email messages. To exit press CTRL+C")
 
 	var forever chan struct{}
+
+	// goroutine to process incoming messages concurrently
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
@@ -95,6 +98,7 @@ func sendEmail(cfg Config, msg EmailMessage) error {
 	return err
 }
 
+// attempts to connect to RabbitMQ, retrying several times on failure
 func connectToRabbitMQWithRetries(addr string) (*amqp.Connection, error) {
 	var conn *amqp.Connection
 	var err error
