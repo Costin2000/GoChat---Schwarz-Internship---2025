@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 
+	pbauth "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
+	"google.golang.org/grpc"
 )
 
 type mockStorage struct {
@@ -24,6 +26,14 @@ func (m *mockStorage) listUsers(ctx context.Context, req *pb.ListUsersRequest) (
 		return m.listUsersFunc(ctx, req)
 	}
 	return nil, nil
+}
+
+type authMock struct {
+	loginFunc func(ctx context.Context, req *pbauth.LoginRequest, opts ...grpc.CallOption) (*pbauth.LoginResponse, error)
+}
+
+func (m *authMock) Login(ctx context.Context, req *pbauth.LoginRequest, opts ...grpc.CallOption) (*pbauth.LoginResponse, error) {
+	return m.loginFunc(ctx, req)
 }
 
 type StorageMockOptions struct {
@@ -57,6 +67,7 @@ func newMockStorageAccess(
 
 type ServiceMockOptions struct {
 	storageAccess StorageAccess
+	authMock      authClient
 }
 
 func NewMockService(opts ServiceMockOptions) *UserService {
@@ -65,8 +76,20 @@ func NewMockService(opts ServiceMockOptions) *UserService {
 		storage = opts.storageAccess
 	}
 
+	var authCl authClient
+	if opts.authMock != nil {
+		authCl = opts.authMock
+	} else {
+		authCl = &authMock{
+			loginFunc: func(ctx context.Context, req *pbauth.LoginRequest, opts ...grpc.CallOption) (*pbauth.LoginResponse, error) {
+				return &pbauth.LoginResponse{Token: "myCustomToken", UserId: 1}, nil
+			},
+		}
+	}
+
 	return &UserService{
 		storageAccess: storage,
+		authClient:    authCl,
 	}
 }
 
