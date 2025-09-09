@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,9 +12,11 @@ import (
 	"strings"
 	"time"
 
+	pbauth "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,10 +24,15 @@ import (
 
 const port = ":50051"
 
+type authClient interface {
+	Login(ctx context.Context, req *pbauth.LoginRequest, opts ...grpc.CallOption) (*pbauth.LoginResponse, error)
+}
+
 type UserService struct {
 	storageAccess StorageAccess
 	pb.UnimplementedUserServiceServer
-	emailPub EmailPublisher
+	emailPub   EmailPublisher
+	authClient authClient
 }
 
 // retrieve db setup from the .env file
@@ -131,11 +139,25 @@ func main() {
 		log.Fatalf("Error polling port %s %v", port, err)
 	}
 
+	authAddr := os.Getenv("AUTH_ADDR")
+	if authAddr == "" {
+		authAddr = "auth:50053"
+	}
+
+	conn, err := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to auth service")
+	}
+	defer conn.Close()
+
+	authClient := pbauth.NewAuthServiceClient(conn)
+
 	// server connections
 	storage := newPostgresAccess(db)
 	UserBaseServer := &UserService{
 		storageAccess: storage,
 		emailPub:      emailPub,
+		authClient:    authClient,
 	}
 
 	grpcServer := grpc.NewServer()
