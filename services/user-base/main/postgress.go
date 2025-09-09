@@ -135,6 +135,7 @@ func (pa *PostgresAccess) listUsers(ctx context.Context, req *pb.ListUsersReques
 
 	where := []string{}
 	args := []any{}
+	isIdFilterActive := false
 
 	for _, f := range req.GetFilters() {
 		switch x := f.Filter.(type) {
@@ -148,7 +149,15 @@ func (pa *PostgresAccess) listUsers(ctx context.Context, req *pb.ListUsersReques
 				where = append(where, fmt.Sprintf("LOWER(last_name) = LOWER($%d)", len(args)+1))
 				args = append(args, v)
 			}
+		// New: added logic for filtering by a list of ids
+		case *pb.ListUsersFiltersOneOf_UserIds:
+			if ids := x.UserIds.GetUserId(); len(ids) > 0 {
+				isIdFilterActive = true
+				where = append(where, fmt.Sprintf("id = ANY($%d)", len(args)+1))
+				args = append(args, ids)
+			}
 		}
+
 	}
 
 	if lastID > 0 {
@@ -186,7 +195,7 @@ func (pa *PostgresAccess) listUsers(ctx context.Context, req *pb.ListUsersReques
 	}
 
 	nextToken := ""
-	if int64(len(users)) > ps {
+	if !isIdFilterActive && int64(len(users)) > ps {
 		nextToken = fmt.Sprintf("id:%d", users[ps-1].Id)
 		users = users[:ps]
 	}

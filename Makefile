@@ -32,7 +32,7 @@ logs:
 	docker compose logs -f
 
 # --- Service-Specific Commands (Loops) ---
-all: build
+all: clean build
 
 proto:
 	@echo "==> Generating protobuf files for all services..."

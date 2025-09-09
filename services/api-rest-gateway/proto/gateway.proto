@@ -44,7 +44,7 @@ service GatewayService {
 
     rpc ListFriendRequests(friendrequest.ListFriendRequestsRequest) returns (friendrequest.ListFriendRequestsResponse) {
         option (google.api.http) = {
-            get: "/v1/friend-requests"
+            post: "/v1/friend-requests"
         };
     }
 
@@ -57,7 +57,7 @@ service GatewayService {
 
     rpc FetchUserFriends(aggregator.FetchUserFriendsRequest) returns (aggregator.FetchUserFriendsResponse) {
         option (google.api.http) = {
-            get: "/v1/friends"
+            post: "/v1/friends"
         };
     }
 }

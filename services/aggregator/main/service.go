@@ -20,10 +20,17 @@ const (
 	userAddr = "localhost:50051"
 )
 
+type FriendRequestClient interface {
+	ListFriendRequests(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error)
+}
+type UserClient interface {
+	ListUsers(ctx context.Context, req *userpb.ListUsersRequest, opts ...grpc.CallOption) (*userpb.ListUsersResponse, error)
+}
+
 type AggregatorService struct {
 	aggrpb.UnimplementedAggregatorServiceServer
-	frClient       frpb.FriendRequestServiceClient
-	userBaseClient userpb.UserServiceClient
+	frClient       FriendRequestClient
+	userBaseClient UserClient
 }
 
 func main() {
@@ -42,10 +49,12 @@ func main() {
 	frConn, err := grpc.NewClient(frAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial friend request service")
 	defer frConn.Close()
+	frClient := frpb.NewFriendRequestServiceClient(frConn)
+	userBaseClient := userpb.NewUserServiceClient(userConn)
 
 	aggrSvc := &AggregatorService{
-		frClient:       frpb.NewFriendRequestServiceClient(frConn),
-		userBaseClient: userpb.NewUserServiceClient(userConn),
+		frClient:       frClient,
+		userBaseClient: userBaseClient,
 	}
 
 	grpcServer := grpc.NewServer()
