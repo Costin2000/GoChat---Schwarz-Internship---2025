@@ -91,6 +91,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  aggregator:
+    build:
+      context: .
+      dockerfile: ./services/aggregator/Dockerfile
+    container_name: aggregator-service
+    ports:
+      - "50054:50054"
+    networks:
+      - microservices-net
+    depends_on:
+      - user-base
+      - friend-request-base
   
   api-rest-gateway:
     build:
