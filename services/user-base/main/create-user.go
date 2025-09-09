@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,11 +26,25 @@ func (svc *UserService) CreateUser(ctx context.Context, req *pb.CreateUserReques
 		return nil, status.Errorf(codes.InvalidArgument, "all fields are required")
 	}
 
-	user, err := svc.storageAccess.createUser(ctx, req.User)
+	// Salvam parola originala pentru login ulterior
+	plainPassword := user.Password
+
+	// Cream utilizatorul in DB
+	createdUser, err := svc.storageAccess.createUser(ctx, req.User)
 	if err != nil {
 		return nil, err
 	}
 
+	// Obtinem token apeland serviciul Auth
+	loginResp, err := svc.authClient.Login(ctx, &authpb.LoginRequest{
+		Email:    user.Email,
+		Password: plainPassword,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "user created but failed to login: %v", err)
+	}
+
+	// Trimitem si tokenul in raspuns
 	if svc.emailPub != nil {
 		_ = svc.emailPub.Publish(ctx, EmailMessage{
 			To:      user.Email,
@@ -39,6 +54,7 @@ func (svc *UserService) CreateUser(ctx context.Context, req *pb.CreateUserReques
 	}
 
 	return &pb.CreateUserResponse{
-		User: user,
+		User:  createdUser,
+		Token: loginResp.Token,
 	}, nil
 }
