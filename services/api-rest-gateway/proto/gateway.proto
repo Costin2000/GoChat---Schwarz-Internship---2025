@@ -39,12 +39,14 @@ service GatewayService {
     rpc UpdateFriendRequest(friendrequest.UpdateFriendRequestRequest) returns (friendrequest.UpdateFriendRequestResponse) {
         option (google.api.http) = {
             patch: "/v1/friend-request/{friend_request.id}"
+            body: "*"
         };
     }
 
     rpc ListFriendRequests(friendrequest.ListFriendRequestsRequest) returns (friendrequest.ListFriendRequestsResponse) {
         option (google.api.http) = {
-            get: "/v1/friend-requests"
+            post: "/v1/friend-requests"
+            body: "*"
         };
     }
 
@@ -57,7 +59,8 @@ service GatewayService {
 
     rpc FetchUserFriends(aggregator.FetchUserFriendsRequest) returns (aggregator.FetchUserFriendsResponse) {
         option (google.api.http) = {
-            get: "/v1/friends"
+            post: "/v1/friends"
+            body: "*"
         };
     }
 }

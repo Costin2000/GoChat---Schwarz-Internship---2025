@@ -51,7 +51,7 @@ func main() {
 	defer frConn.Close()
 
 	aggrConn, err := grpc.NewClient(aggrReqAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	check(err, "dial friend request service")
+	check(err, "dial aggregator service")
 	defer aggrConn.Close()
 
 	s := &server{

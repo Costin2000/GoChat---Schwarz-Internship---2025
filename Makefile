@@ -12,27 +12,22 @@ SERVICES := services/api-rest-gateway services/auth services/friend-request-base
 # --- Docker Compose Commands ---
 up:
 	@echo "==> Starting all services with Docker Compose (builds if necessary)..."
-	@export $$(grep -v '^#' ./db/.env | xargs) && \
-	docker compose up --build -d
-
+	docker compose --env-file ./.env --env-file ./db/.env up --build
 down:
 	@echo "==> Stopping all Docker Compose services..."
-	@export $$(grep -v '^#' ./db/.env | xargs) && \
-	docker compose down
+	docker compose --env-file ./.env --env-file ./db/.env down
 
 down-hard:
 	@echo "==> Stopping all Docker Compose services and deleting the volumes..."
-	@export $$(grep -v '^#' ./db/.env | xargs) && \
-	docker compose down -v
+	docker compose --env-file ./.env --env-file ./db/.env -v down
 	rm -rf ./db-data
 
 logs:
 	@echo "==> Tailing logs for all running services..."
-	@export $$(grep -v '^#' ./db/.env | xargs) && \
 	docker compose logs -f
 
 # --- Service-Specific Commands (Loops) ---
-all: build
+all: clean build
 
 proto:
 	@echo "==> Generating protobuf files for all services..."
