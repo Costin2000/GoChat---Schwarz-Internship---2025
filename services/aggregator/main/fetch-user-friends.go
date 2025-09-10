@@ -26,11 +26,11 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 	// Query all accepted friend requests concerning the requesting user
 	sentFiltersSender := []*frpb.ListFriendRequestsFiltersOneOf{
 		{Filter: &frpb.ListFriendRequestsFiltersOneOf_SenderId{SenderId: reqId}},
-		{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: frpb.RequestStatus_STATUS_ACCEPTED.String()}},
+		{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: "accepted"}},
 	}
 	sentFiltersReceiver := []*frpb.ListFriendRequestsFiltersOneOf{
 		{Filter: &frpb.ListFriendRequestsFiltersOneOf_ReceiverId{ReceiverId: reqId}},
-		{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: frpb.RequestStatus_STATUS_ACCEPTED.String()}},
+		{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: "accepted"}},
 	}
 
 	friendRequests := []*frpb.FriendRequest{}
@@ -57,6 +57,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 		}
 	}
 
+	nextPageToken = ""
 	for {
 		listFrReqReceiver := &frpb.ListFriendRequestsRequest{
 			NextPageToken: nextPageToken,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	aggrpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto"
 	frpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
@@ -12,12 +13,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
-)
-
-const (
-	aggrPort = ":50054"
-	frAddr   = "localhost:50052"
-	userAddr = "localhost:50051"
 )
 
 type FriendRequestClient interface {
@@ -34,6 +29,10 @@ type AggregatorService struct {
 }
 
 func main() {
+
+	aggrPort := getEnv("AGGREGATOR_PORT", ":50054")
+	frAddr := getEnv("FRIEND_REQUEST_ADDR", "localhost:50052")
+	userAddr := getEnv("USER_BASE_ADDR", "localhost:50051")
 
 	// network connection
 	lis, err := net.Listen("tcp", aggrPort)
@@ -81,4 +80,11 @@ func (s *AggregatorService) ListFriendRequests(ctx context.Context, req *frpb.Li
 
 func (s *AggregatorService) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
 	return s.userBaseClient.ListUsers(ctx, req)
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

@@ -5,3 +5,4 @@ db/.env
 devtest-db/.env
 .vscode
 .env
+postman_requests.json
