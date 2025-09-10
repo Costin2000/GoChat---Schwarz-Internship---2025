@@ -67,6 +67,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_PORT=${DB_PORT}
       - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
+      - DB_HOST=postgres-db
     ports:
       - "50051:50051"
     networks:
@@ -90,6 +91,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_PORT=${DB_PORT}
+      - DB_HOST=postgres-db
     ports:
       - "50052:50052"
     networks:
@@ -114,6 +116,26 @@ services:
     depends_on:
       - user-base
       - friend-request-base
+
+  message-base:
+    build:
+      context: .
+      dockerfile: ./services/message-base/Dockerfile
+    container_name: message-base-service
+    ports:
+      - "50055:50055"
+    networks:
+      - microservices-net
+    environment:
+      - ENV=docker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
+      - DB_HOST=postgres-db
+    depends_on:
+      db:
+        condition: service_healthy
   
   api-rest-gateway:
     build:
@@ -131,11 +153,13 @@ services:
       - AUTH_ADDR=auth:50053
       - USER_BASE_ADDR=user-base:50051
       - FRIEND_REQUEST_ADDR=friend-request-service:50052
+      - MESSAGE_BASE_ADDR=message-base:50055
       - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
     depends_on:
       - auth
       - user-base
       - friend-request-base
+      - message-base
 
   email:
     build:

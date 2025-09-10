@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package message_base;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/message-base/proto;proto";
+
+service MessageService {
+    rpc CreateMessage (CreateMessageRequest) returns (CreateMessageResponse);
+}
+
+message Message {
+    int64 id = 1;
+    int64 conversation_id = 2;
+    int64 sender_id = 3;
+    string content = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message CreateMessageRequest {
+    Message message = 1;
+}
+
+message CreateMessageResponse {
+    Message message = 1;
+}
