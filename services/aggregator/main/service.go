@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	aggrpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto"
 	frpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
@@ -14,19 +15,24 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const (
-	aggrPort = ":50054"
-	frAddr   = "localhost:50052"
-	userAddr = "localhost:50051"
-)
+type FriendRequestClient interface {
+	ListFriendRequests(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error)
+}
+type UserClient interface {
+	ListUsers(ctx context.Context, req *userpb.ListUsersRequest, opts ...grpc.CallOption) (*userpb.ListUsersResponse, error)
+}
 
 type AggregatorService struct {
 	aggrpb.UnimplementedAggregatorServiceServer
-	frClient       frpb.FriendRequestServiceClient
-	userBaseClient userpb.UserServiceClient
+	frClient       FriendRequestClient
+	userBaseClient UserClient
 }
 
 func main() {
+
+	aggrPort := getEnv("AGGREGATOR_PORT", ":50054")
+	frAddr := getEnv("FRIEND_REQUEST_ADDR", "localhost:50052")
+	userAddr := getEnv("USER_BASE_ADDR", "localhost:50051")
 
 	// network connection
 	lis, err := net.Listen("tcp", aggrPort)
@@ -42,10 +48,12 @@ func main() {
 	frConn, err := grpc.NewClient(frAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial friend request service")
 	defer frConn.Close()
+	frClient := frpb.NewFriendRequestServiceClient(frConn)
+	userBaseClient := userpb.NewUserServiceClient(userConn)
 
 	aggrSvc := &AggregatorService{
-		frClient:       frpb.NewFriendRequestServiceClient(frConn),
-		userBaseClient: userpb.NewUserServiceClient(userConn),
+		frClient:       frClient,
+		userBaseClient: userBaseClient,
 	}
 
 	grpcServer := grpc.NewServer()
@@ -72,4 +80,11 @@ func (s *AggregatorService) ListFriendRequests(ctx context.Context, req *frpb.Li
 
 func (s *AggregatorService) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
 	return s.userBaseClient.ListUsers(ctx, req)
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

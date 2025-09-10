@@ -41,6 +41,8 @@ services:
       context: .
       dockerfile: ./services/auth/Dockerfile
     container_name: auth-service
+    env_file:
+      - ./db/.env
     ports:
       - "50053:50053"
     networks:
@@ -56,6 +58,8 @@ services:
       context: .
       dockerfile: ./services/user-base/Dockerfile
     container_name: user-base
+    env_file:
+      - ./db/.env
     environment:
       - ENV=docker
       - POSTGRES_USER=${POSTGRES_USER}
@@ -78,6 +82,8 @@ services:
       context: .
       dockerfile: ./services/friend-request-base/Dockerfile
     container_name: friend-request-service
+    env_file:
+      - ./db/.env
     environment:
       - ENV=docker
       - POSTGRES_USER=${POSTGRES_USER}
@@ -99,6 +105,10 @@ services:
     container_name: aggregator-service
     ports:
       - "50054:50054"
+    environment:
+      - AGGREGATOR_PORT=:50054
+      - USER_BASE_ADDR=user-base:50051
+      - FRIEND_REQUEST_ADDR=friend-request-service:50052
     networks:
       - microservices-net
     depends_on:
@@ -110,6 +120,8 @@ services:
       context: .
       dockerfile: ./services/api-rest-gateway/Dockerfile
     container_name: api-gateway-service
+    env_file:
+      - ./db/.env
     ports:
       - "8080:8080"
     networks:
@@ -131,6 +143,8 @@ services:
       dockerfile: ./services/email/Dockerfile
     container_name: email-service
     restart: always
+    env_file:
+      - ./db/.env
     environment:
       - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
       - SMTP_HOST=smtp.gmail.com

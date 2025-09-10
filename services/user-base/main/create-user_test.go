@@ -12,9 +12,11 @@ import (
 
 	errchecks "github.com/Costin2000/GoChat---Schwarz-Internship---2025/pkg"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	pbauth "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 )
 
@@ -36,7 +38,8 @@ func fixtureCreateUserRequest(mods ...func(req *pb.CreateUserRequest)) *pb.Creat
 
 func fixtureCreateUserResponse(mods ...func(req *pb.CreateUserResponse)) *pb.CreateUserResponse {
 	user := &pb.CreateUserResponse{
-		User: fixtureUser(),
+		User:  fixtureUser(),
+		Token: "myCustomToken",
 	}
 	for _, mod := range mods {
 		mod(user)
@@ -47,6 +50,7 @@ func fixtureCreateUserResponse(mods ...func(req *pb.CreateUserResponse)) *pb.Cre
 func Test_CreateUser(t *testing.T) {
 	type given struct {
 		mockStorageAccess StorageAccess
+		mockAuth          authClient
 	}
 
 	tests := []struct {
@@ -83,6 +87,18 @@ func Test_CreateUser(t *testing.T) {
 			expectedErr: errchecks.MsgContains("db insert failed"),
 		},
 		{
+			name: "auth returns error",
+			req:  fixtureCreateUserRequest(),
+			given: given{
+				mockAuth: &authMock{
+					loginFunc: func(ctx context.Context, req *pbauth.LoginRequest, opts ...grpc.CallOption) (*pbauth.LoginResponse, error) {
+						return nil, errors.New("auth error")
+					},
+				},
+			},
+			expectedErr: errchecks.MsgContains("auth error"),
+		},
+		{
 			name:         "successfully creates user",
 			req:          fixtureCreateUserRequest(),
 			expectedResp: fixtureCreateUserResponse(),
@@ -93,6 +109,7 @@ func Test_CreateUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewMockService(ServiceMockOptions{
 				storageAccess: tt.given.mockStorageAccess,
+				authMock:      tt.given.mockAuth,
 			})
 
 			resp, err := svc.CreateUser(context.Background(), tt.req)
@@ -146,7 +163,9 @@ func TestCreateUser_Integration(t *testing.T) {
 	}
 
 	storage := newPostgresAccess(db)
-	s := &UserService{storageAccess: storage}
+	s := NewMockService(ServiceMockOptions{
+		storageAccess: storage,
+	})
 
 	// Clean table
 	db.ExecContext(context.Background(), `DELETE FROM "User"`)

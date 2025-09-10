@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -121,7 +122,7 @@ func (pa *PostgresAccess) listFriendRequests(ctx context.Context, req *proto.Lis
 			argCounter++
 		case *proto.ListFriendRequestsFiltersOneOf_Status:
 			query.WriteString(fmt.Sprintf(" AND status = $%d", argCounter))
-			args = append(args, filterTyped.Status)
+			args = append(args, strings.ToLower(filterTyped.Status))
 			argCounter++
 		}
 	}
@@ -140,8 +141,11 @@ func (pa *PostgresAccess) listFriendRequests(ctx context.Context, req *proto.Lis
 	// Always sort id's in ascending order to ensure the same request is never showed again on different pages
 	query.WriteString(fmt.Sprintf(" ORDER BY id ASC LIMIT $%d", argCounter))
 	args = append(args, req.PageSize)
+
+	log.Printf("Executing query: %s with args: %v", query.String(), args)
 	rows, err := pa.db.QueryContext(ctx, query.String(), args...)
 	if err != nil {
+		log.Printf("DATABASE ERROR: Query '%s' with args %v failed: %v", query.String(), args, err)
 		return nil, status.Errorf(codes.Internal, "database query failed: %v", err)
 	}
 

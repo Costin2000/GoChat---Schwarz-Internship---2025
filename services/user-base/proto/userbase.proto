@@ -36,6 +36,7 @@ message CreateUserRequest {
 
 message CreateUserResponse {
   User user = 1;
+  string token = 2;
 }
 
 message ListUsersRequest {
@@ -53,6 +54,7 @@ message ListUsersFiltersOneOf {
     oneof filter {
         FilterByFirstName first_name = 1;
         FilterByLastName last_name = 2;
+        FilterByIdIn user_ids = 3;
     }
 }
 
@@ -62,4 +64,8 @@ message FilterByFirstName {
 
 message FilterByLastName {
     string equals = 1;
+}
+
+message FilterByIdIn {
+    repeated int64 user_id = 1;
 }
