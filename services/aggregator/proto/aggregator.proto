@@ -11,8 +11,9 @@ service AggregatorService {
 
 message FetchUserFriendsRequest {
   string user_id = 1;
+  bool show_friends = 2;
 }
 
 message FetchUserFriendsResponse {
-  repeated user_base.User friends = 1;
+  repeated user_base.User users = 1;
 }

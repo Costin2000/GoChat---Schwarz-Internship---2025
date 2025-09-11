@@ -1,7 +1,7 @@
 # Makefile in the root directory
 
 # Define all service directories. Add new services to this list.
-SERVICES := services/api-rest-gateway services/auth services/friend-request-base services/user-base services/aggregator
+SERVICES := services/api-rest-gateway services/auth services/friend-request-base services/user-base services/aggregator services/email services/message-base
 
 # Phony targets prevent conflicts with file names
 .PHONY: all proto build tidy docker-build clean up down down-hard logs help
