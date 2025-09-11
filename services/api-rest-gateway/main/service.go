@@ -13,6 +13,7 @@ import (
 	gatewaypb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto"
 	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
 	friendrequestpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
+	messagepb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/message-base/proto"
 	userbasepb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -27,6 +28,7 @@ type server struct {
 	frClient       friendrequestpb.FriendRequestServiceClient
 	userBaseClient userbasepb.UserServiceClient
 	aggrClient     aggrpb.AggregatorServiceClient
+	messageClient  messagepb.MessageServiceClient
 	upstreamTO     time.Duration
 }
 
@@ -37,6 +39,7 @@ func main() {
 	userBaseAddr := env("USER_BASE_ADDR", "user-base:50051")
 	aggrReqAddr := env("AGGR_REQUEST_ADDR", "aggregator:50054")
 	upstreamTimeout := durEnv("UPSTREAM_REQUEST_TIMEOUT", 5*time.Second)
+	messageAddr := env("MESSAGE_BASE_ADDR", "message-base:50055")
 
 	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial auth")
@@ -54,12 +57,17 @@ func main() {
 	check(err, "dial aggregator service")
 	defer aggrConn.Close()
 
+	msgConn, err := grpc.NewClient(messageAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial message-base")
+	defer msgConn.Close()
+
 	s := &server{
 		authClient:     authpb.NewAuthServiceClient(authConn),
 		frClient:       friendrequestpb.NewFriendRequestServiceClient(frConn),
 		userBaseClient: userbasepb.NewUserServiceClient(userBaseConn),
 		aggrClient:     aggrpb.NewAggregatorServiceClient(aggrConn),
 		upstreamTO:     upstreamTimeout,
+		messageClient:  messagepb.NewMessageServiceClient(msgConn),
 	}
 
 	json := &runtime.JSONPb{
@@ -206,4 +214,10 @@ func check(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %v", msg, err)
 	}
+}
+
+func (s *server) CreateMessage(ctx context.Context, req *messagepb.CreateMessageRequest) (*messagepb.CreateMessageResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.messageClient.CreateMessage(c, req)
 }
