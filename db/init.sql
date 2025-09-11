@@ -41,3 +41,5 @@ CREATE TABLE IF NOT EXISTS "Message" (
 );
 
 CREATE INDEX IF NOT EXISTS message_conv_created_idx ON "Message"(conversation_id, created_at);
+
+INSERT INTO "Conversation" (created_at) VALUES (NOW());

@@ -67,7 +67,7 @@ service GatewayService {
 
     rpc CreateMessage(message_base.CreateMessageRequest) returns (message_base.CreateMessageResponse) {
       option (google.api.http) = {
-        post: "/v1/messages"
+        post: "/v1/message"
         body: "*"
       };
     }
