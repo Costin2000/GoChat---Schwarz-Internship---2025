@@ -14,10 +14,31 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
+func hasSenderID(filters []*frpb.ListFriendRequestsFiltersOneOf, id string) bool {
+	for _, f := range filters {
+		if s, ok := f.Filter.(*frpb.ListFriendRequestsFiltersOneOf_SenderId); ok && s.SenderId == id {
+			return true
+		}
+	}
+	return false
+}
+
+func hasReceiverID(filters []*frpb.ListFriendRequestsFiltersOneOf, id string) bool {
+	for _, f := range filters {
+		if r, ok := f.Filter.(*frpb.ListFriendRequestsFiltersOneOf_ReceiverId); ok && r.ReceiverId == id {
+			return true
+		}
+	}
+	return false
+}
+
 func Test_FetchFriendsUnit(t *testing.T) {
 
+	user1 := &userpb.User{Id: 1, UserName: "requester"}
 	user2 := &userpb.User{Id: 2, UserName: "friend_one"}
 	user3 := &userpb.User{Id: 3, UserName: "friend_two"}
+	user4 := &userpb.User{Id: 4, UserName: "non_approached_one"}
+	user5 := &userpb.User{Id: 5, UserName: "non_approached_two"}
 
 	type Given struct {
 		userClient UserClient
@@ -25,28 +46,20 @@ func Test_FetchFriendsUnit(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		userId          string
-		expectedFriends []*userpb.User
-		listUserReq     *userpb.ListUsersRequest
-		listFrReq       *frpb.ListFriendRequestsRequest
-		expectedErr     errchecks.Check
-		given           Given
+		name          string
+		expectedUsers []*userpb.User
+		req           *aggrpb.FetchUserFriendsRequest
+		expectedErr   errchecks.Check
+		given         Given
 	}{
 		{
 			name:        "Error: empty user id",
-			userId:      "",
+			req:         &aggrpb.FetchUserFriendsRequest{UserId: ""},
 			expectedErr: errchecks.MsgContains("UserId cannot be empty"),
 		},
 		{
-			name:   "Success: User has friends",
-			userId: "1",
-			listUserReq: &userpb.ListUsersRequest{
-				PageSize: 10,
-			},
-			listFrReq: &frpb.ListFriendRequestsRequest{
-				PageSize: 10,
-			},
+			name: "Success: User has friends",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: true},
 			given: Given{
 				userClient: &userClientMock{
 					ListUsersFunc: func(ctx context.Context, req *userpb.ListUsersRequest, opts ...grpc.CallOption) (*userpb.ListUsersResponse, error) {
@@ -74,18 +87,11 @@ func Test_FetchFriendsUnit(t *testing.T) {
 					},
 				},
 			},
-			expectedFriends: []*userpb.User{user2, user3},
-			expectedErr:     nil,
+			expectedUsers: []*userpb.User{user2, user3},
 		},
 		{
-			name:   "Success: No friends found",
-			userId: "1",
-			listUserReq: &userpb.ListUsersRequest{
-				PageSize: 10,
-			},
-			listFrReq: &frpb.ListFriendRequestsRequest{
-				PageSize: 10,
-			},
+			name: "Success: No friends found",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: true},
 			given: Given{
 				frClient: &frClientMock{
 					ListFrFunc: func(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error) {
@@ -93,11 +99,11 @@ func Test_FetchFriendsUnit(t *testing.T) {
 					},
 				},
 			},
-			expectedFriends: []*userpb.User{},
+			expectedUsers: []*userpb.User{},
 		},
 		{
-			name:   "Error: ListFriendRequests call fails",
-			userId: "1",
+			name: "Error: ListFriendRequests call fails",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: true},
 			given: Given{
 				frClient: &frClientMock{
 					ListFrFunc: func(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error) {
@@ -108,8 +114,8 @@ func Test_FetchFriendsUnit(t *testing.T) {
 			expectedErr: errchecks.MsgContains("Failed to fetch friend data"),
 		},
 		{
-			name:   "Error: ListUsers call fails",
-			userId: "1",
+			name: "Error: ListUsers call fails",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: true},
 			given: Given{
 				frClient: &frClientMock{
 					ListFrFunc: func(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error) {
@@ -129,6 +135,49 @@ func Test_FetchFriendsUnit(t *testing.T) {
 			},
 			expectedErr: errchecks.MsgContains("Failed to fetch user friends"),
 		},
+		{
+			name: "Success: Find non-approached users (ShowFriends=false)",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: false},
+			given: Given{
+				frClient: &frClientMock{
+					ListFrFunc: func(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error) {
+						if hasSenderID(req.Filters, "1") {
+							return &frpb.ListFriendRequestsResponse{Requests: []*frpb.FriendRequest{{SenderId: "1", ReceiverId: "2"}}}, nil
+						}
+						if hasReceiverID(req.Filters, "1") {
+							return &frpb.ListFriendRequestsResponse{Requests: []*frpb.FriendRequest{{SenderId: "3", ReceiverId: "1"}}}, nil
+						}
+						return &frpb.ListFriendRequestsResponse{}, nil
+					},
+				},
+				userClient: &userClientMock{
+					ListUsersFunc: func(ctx context.Context, req *userpb.ListUsersRequest, opts ...grpc.CallOption) (*userpb.ListUsersResponse, error) {
+						return &userpb.ListUsersResponse{Users: []*userpb.User{user1, user2, user3, user4, user5}}, nil
+					},
+				},
+			},
+			expectedUsers: []*userpb.User{user4, user5},
+		},
+		{
+			name: "Success: No non-approached users found (ShowFriends=false)",
+			req:  &aggrpb.FetchUserFriendsRequest{UserId: "1", ShowFriends: false},
+			given: Given{
+				frClient: &frClientMock{
+					ListFrFunc: func(ctx context.Context, req *frpb.ListFriendRequestsRequest, opts ...grpc.CallOption) (*frpb.ListFriendRequestsResponse, error) {
+						if hasSenderID(req.Filters, "1") {
+							return &frpb.ListFriendRequestsResponse{Requests: []*frpb.FriendRequest{{SenderId: "1", ReceiverId: "2"}}}, nil
+						}
+						return &frpb.ListFriendRequestsResponse{}, nil
+					},
+				},
+				userClient: &userClientMock{
+					ListUsersFunc: func(ctx context.Context, req *userpb.ListUsersRequest, opts ...grpc.CallOption) (*userpb.ListUsersResponse, error) {
+						return &userpb.ListUsersResponse{Users: []*userpb.User{user1, user2}}, nil
+					},
+				},
+			},
+			expectedUsers: []*userpb.User{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,16 +186,12 @@ func Test_FetchFriendsUnit(t *testing.T) {
 				userClient: tt.given.userClient,
 				frClient:   tt.given.frClient,
 			})
-			req := &aggrpb.FetchUserFriendsRequest{
-				UserId: tt.userId,
-			}
 
-			resp, err := svc.FetchUserFriends(context.Background(), req)
-
+			resp, err := svc.FetchUserFriends(context.Background(), tt.req)
 			errchecks.Assert(t, err, tt.expectedErr)
 			if tt.expectedErr == nil {
 				expectedRsp := &aggrpb.FetchUserFriendsResponse{
-					Friends: tt.expectedFriends,
+					Users: tt.expectedUsers,
 				}
 				if diff := cmp.Diff(expectedRsp, resp, protocmp.Transform()); diff != "" {
 					t.Errorf("FetchUserFriends response mismatch (-want +got):\n%s", diff)
