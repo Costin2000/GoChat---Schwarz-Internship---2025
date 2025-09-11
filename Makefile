@@ -19,7 +19,11 @@ down:
 
 down-hard:
 	@echo "==> Stopping all Docker Compose services and deleting the volumes..."
+<<<<<<< HEAD
 	docker compose --env-file ./.env --env-file ./db/.env down -v
+=======
+	docker compose --env-file ./.env --env-file ./db/.env -v down
+>>>>>>> 76e07b1 (feat: Work in progress on register page)
 	rm -rf ./db-data
 
 logs:
@@ -71,42 +75,15 @@ help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Docker Compose Targets:"
-	@echo "  up                  Start all services with docker-compose in detached mode."
-	@echo "  down                Stop all services with docker-compose."
+	@echo "  up             	 Start all services with docker-compose in detached mode."
+	@echo "  down           	 Stop all services with docker-compose."
 	@echo "  down-hard           Stop all services with docker-compose and deletes associated volumes."
-	@echo "  logs                Tail the logs of all running services."
+	@echo "  logs           	 Tail the logs of all running services."
 	@echo ""
 	@echo "Individual Service Targets:"
-	@echo "  all                 Build all services (default)."
-	@echo "  proto               Generate protobuf files for all services."
-	@echo "  build               Build binaries for all services."
-	@echo "  tidy                Run 'go mod tidy' for all services."
-	@echo "  docker-build        Build Docker images for all services individually."
-	@echo "  clean               Clean build artifacts for all services."
-
-.PHONY: proto-frontend
-proto-frontend:
-	@echo "==> Generating protobuf + grpc-web files for frontend..."
-	@mkdir -p frontend/src/proto
-	@protoc \
-		-I=. \
-		-I=$(shell go list -f '{{.Dir}}' -m github.com/grpc-ecosystem/grpc-gateway/v2)/third_party/googleapis \
-		--js_out=import_style=typescript,binary:frontend/src/proto \
-		--grpc-web_out=import_style=typescript,mode=grpcwebtext:frontend/src/proto \
-		services/user-base/proto/userbase.proto \
-		services/message-base/proto/message.proto \
-		services/friend-request-base/proto/friendrequest.proto \
-		services/auth/proto/auth.proto \
-		services/aggregator/proto/aggregator.proto \
-		services/api-rest-gateway/proto/gateway.proto
-
-.PHONY: frontend-dev
-frontend-dev:
-	@echo "==> Starting frontend development server..."
-	@cd frontend && npm run dev
-
-.PHONY: frontend-install
-frontend-install:
-	@echo "==> Installing frontend dependencies..."
-	@cd frontend && npm install
-
+	@echo "  all            	 Build all services (default)."
+	@echo "  proto          	 Generate protobuf files for all services."
+	@echo "  build          	 Build binaries for all services."
+	@echo "  tidy           	 Run 'go mod tidy' for all services."
+	@echo "  docker-build   	 Build Docker images for all services individually."
+	@echo "  clean          	 Clean build artifacts for all services."
