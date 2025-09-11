@@ -15,6 +15,8 @@ import (
 	userpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 )
 
+const accStatus = "accepted"
+
 func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.FetchUserFriendsRequest) (*aggrpb.FetchUserFriendsResponse, error) {
 
 	if req.UserId == "" {
@@ -35,11 +37,11 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 		// Query all accepted friend requests concerning the requesting user
 		sentFiltersSender := []*frpb.ListFriendRequestsFiltersOneOf{
 			{Filter: &frpb.ListFriendRequestsFiltersOneOf_SenderId{SenderId: reqId}},
-			{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: "accepted"}},
+			{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: accStatus}},
 		}
 		sentFiltersReceiver := []*frpb.ListFriendRequestsFiltersOneOf{
 			{Filter: &frpb.ListFriendRequestsFiltersOneOf_ReceiverId{ReceiverId: reqId}},
-			{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: "accepted"}},
+			{Filter: &frpb.ListFriendRequestsFiltersOneOf_Status{Status: accStatus}},
 		}
 
 		nextPageToken := ""
@@ -56,7 +58,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 			}
 			friendRequests = append(friendRequests, friendRequestsRsp.Requests...)
 
-			nextPageToken = friendRequestsRsp.GetNextPageToken()
+			nextPageToken = friendRequestsRsp.NextPageToken
 			if nextPageToken == "" {
 				break
 			}
@@ -76,7 +78,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 			}
 			friendRequests = append(friendRequests, friendRequestsRsp.Requests...)
 
-			nextPageToken = friendRequestsRsp.GetNextPageToken()
+			nextPageToken = friendRequestsRsp.NextPageToken
 			if nextPageToken == "" {
 				break
 			}
@@ -105,7 +107,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 					involvedUserIDs[senderID] = struct{}{}
 					involvedUserIDs[receiverID] = struct{}{}
 				}
-				nextPageToken = frRsp.GetNextPageToken()
+				nextPageToken = frRsp.NextPageToken
 				if nextPageToken == "" {
 					break
 				}
@@ -164,7 +166,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 
 			Users = append(Users, userRsp.Users...)
 
-			userNextPageToken = userRsp.GetNextPageToken()
+			userNextPageToken = userRsp.NextPageToken
 			if userNextPageToken == "" {
 				break
 			}
@@ -181,7 +183,7 @@ func (svc *AggregatorService) FetchUserFriends(ctx context.Context, req *aggrpb.
 				return nil, status.Error(codes.Internal, "Failed to fetch all users list")
 			}
 			allUsers = append(allUsers, userRsp.Users...)
-			nextPageToken = userRsp.GetNextPageToken()
+			nextPageToken = userRsp.NextPageToken
 			if nextPageToken == "" {
 				break
 			}
