@@ -12,6 +12,7 @@ import (
 	aggrpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto"
 	gatewaypb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/api-rest-gateway/proto"
 	authpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto"
+	conversationpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/conversation-base/proto"
 	friendrequestpb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
 	messagepb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/message-base/proto"
 	userbasepb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
@@ -24,12 +25,13 @@ import (
 
 type server struct {
 	gatewaypb.UnimplementedGatewayServiceServer
-	authClient     authpb.AuthServiceClient
-	frClient       friendrequestpb.FriendRequestServiceClient
-	userBaseClient userbasepb.UserServiceClient
-	aggrClient     aggrpb.AggregatorServiceClient
-	messageClient  messagepb.MessageServiceClient
-	upstreamTO     time.Duration
+	authClient         authpb.AuthServiceClient
+	frClient           friendrequestpb.FriendRequestServiceClient
+	userBaseClient     userbasepb.UserServiceClient
+	aggrClient         aggrpb.AggregatorServiceClient
+	messageClient      messagepb.MessageServiceClient
+	conversationClient conversationpb.ConversationServiceClient
+	upstreamTO         time.Duration
 }
 
 func main() {
@@ -40,6 +42,7 @@ func main() {
 	aggrReqAddr := env("AGGR_REQUEST_ADDR", "aggregator:50054")
 	upstreamTimeout := durEnv("UPSTREAM_REQUEST_TIMEOUT", 5*time.Second)
 	messageAddr := env("MESSAGE_BASE_ADDR", "message-base:50055")
+	conversationAddr := env("CONVERSATION_ADDR", "conversation:50056")
 
 	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	check(err, "dial auth")
@@ -61,13 +64,18 @@ func main() {
 	check(err, "dial message-base")
 	defer msgConn.Close()
 
+	convConn, err := grpc.NewClient(conversationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	check(err, "dial conversation service")
+	defer convConn.Close()
+
 	s := &server{
-		authClient:     authpb.NewAuthServiceClient(authConn),
-		frClient:       friendrequestpb.NewFriendRequestServiceClient(frConn),
-		userBaseClient: userbasepb.NewUserServiceClient(userBaseConn),
-		aggrClient:     aggrpb.NewAggregatorServiceClient(aggrConn),
-		upstreamTO:     upstreamTimeout,
-		messageClient:  messagepb.NewMessageServiceClient(msgConn),
+		authClient:         authpb.NewAuthServiceClient(authConn),
+		frClient:           friendrequestpb.NewFriendRequestServiceClient(frConn),
+		userBaseClient:     userbasepb.NewUserServiceClient(userBaseConn),
+		aggrClient:         aggrpb.NewAggregatorServiceClient(aggrConn),
+		upstreamTO:         upstreamTimeout,
+		messageClient:      messagepb.NewMessageServiceClient(msgConn),
+		conversationClient: conversationpb.NewConversationServiceClient(convConn),
 	}
 
 	json := &runtime.JSONPb{
@@ -160,6 +168,12 @@ func (s *server) FetchUserFriends(ctx context.Context, req *aggrpb.FetchUserFrie
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
 	return s.aggrClient.FetchUserFriends(c, req)
+}
+
+func (s *server) CreateConversation(ctx context.Context, req *conversationpb.CreateConversationRequest) (*conversationpb.CreateConversationResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.conversationClient.CreateConversation(c, req)
 }
 
 func env(k, def string) string {
