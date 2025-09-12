@@ -140,16 +140,22 @@ func TestListFriendRequests_Integration(t *testing.T) {
 		t.Errorf("Expected %d friend requests for sender %s, but got %d", expectedCount, senderIDToTest, len(listFrRsp.Requests))
 	}
 
+	validReceiverIDs := make(map[string]struct{})
+	for key, id := range createdUserIDs {
+		if key != "user1" {
+			validReceiverIDs[id] = struct{}{}
+		}
+	}
+
 	for _, req := range listFrRsp.Requests {
 		if req.SenderId != senderIDToTest {
 			t.Errorf("Expected sender ID to be %s, but got %s", senderIDToTest, req.SenderId)
 		}
 
-		if _, ok := createdUserIDs[fmt.Sprintf("user%s", req.ReceiverId)]; !ok {
-			t.Errorf("Unknown receiver ID.")
+		if _, ok := validReceiverIDs[req.ReceiverId]; !ok {
+			t.Errorf("Received an unexpected receiver ID: %s. Valid receiver IDs are: %v", req.ReceiverId, validReceiverIDs)
 		}
 	}
-
 }
 
 func TestListFriendRequests_Unit(t *testing.T) {
