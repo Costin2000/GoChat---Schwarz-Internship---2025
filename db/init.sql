@@ -28,9 +28,17 @@ CREATE TABLE IF NOT EXISTS "Friend Requests" (
 CREATE UNIQUE INDEX IF NOT EXISTS FRIEND_REQUEST_ORDER_IDX ON "Friend Requests" (LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id));
 
 CREATE TABLE IF NOT EXISTS "Conversation" (
-  id BIGSERIAL PRIMARY KEY,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    user1_id BIGINT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+    user2_id BIGINT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CHECK (user1_id <> user2_id)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS CONVERSATION_USER_ORDER_IDX 
+ON "Conversation" (LEAST(user1_id, user2_id), GREATEST(user1_id, user2_id));
 
 CREATE TABLE IF NOT EXISTS "Message" (
     id BIGSERIAL PRIMARY KEY,
@@ -41,5 +49,3 @@ CREATE TABLE IF NOT EXISTS "Message" (
 );
 
 CREATE INDEX IF NOT EXISTS message_conv_created_idx ON "Message"(conversation_id, created_at);
-
-INSERT INTO "Conversation" (created_at) VALUES (NOW());
