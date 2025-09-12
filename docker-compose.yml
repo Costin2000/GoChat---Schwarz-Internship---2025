@@ -136,6 +136,26 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  conversation-base:
+    build:
+      context: .
+      dockerfile: ./services/conversation-base/Dockerfile
+    container_name: conversation-base-service
+    ports:
+      - "50056:50056"
+    networks:
+      - microservices-net
+    environment:
+      - ENV=docker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
+      - DB_HOST=postgres-db
+    depends_on:
+      db:
+        condition: service_healthy
   
   api-rest-gateway:
     build:
@@ -154,12 +174,14 @@ services:
       - USER_BASE_ADDR=user-base:50051
       - FRIEND_REQUEST_ADDR=friend-request-service:50052
       - MESSAGE_BASE_ADDR=message-base:50055
+      - CONVERSATION_ADDR=conversation-base:50056
       - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
     depends_on:
       - auth
       - user-base
       - friend-request-base
       - message-base
+      - conversation-base
 
   email:
     build:

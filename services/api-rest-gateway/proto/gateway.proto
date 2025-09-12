@@ -9,6 +9,8 @@ import "services/aggregator/proto/aggregator.proto";
 import "services/user-base/proto/userbase.proto";
 import "services/friend-request-base/proto/friendrequest.proto";
 import "services/message-base/proto/message.proto";
+import "services/conversation-base/proto/conversation.proto";
+
 service GatewayService {
     rpc Ping(auth.Empty) returns (auth.Pong) {
         option (google.api.http) = {
@@ -71,5 +73,11 @@ service GatewayService {
         body: "*"
       };
     }
-}
 
+    rpc CreateConversation(conversation.CreateConversationRequest) returns (conversation.CreateConversationResponse) {
+      option (google.api.http) = {
+        post: "/v1/conversation"
+        body: "*"
+      };
+    }
+}

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package conversation;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/conversation-base/proto;proto";
+
+service ConversationService {
+    rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse);
+}
+
+message Conversation {
+  string id = 1;
+  string user1_id = 2;
+  string user2_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message CreateConversationRequest {
+  string user1_id = 1;
+  string user2_id = 2;
+}
+
+message CreateConversationResponse {
+  Conversation conversation = 1;
+}
