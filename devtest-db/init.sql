@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS "Conversation" (
     user2_id BIGINT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     CHECK (user1_id <> user2_id)
 );
 
@@ -60,4 +60,5 @@ CREATE TABLE IF NOT EXISTS "Message" (
 
 CREATE INDEX IF NOT EXISTS message_conv_created_idx 
 ON "Message"(conversation_id, created_at);
+
 COMMIT;
