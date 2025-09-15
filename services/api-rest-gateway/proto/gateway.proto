@@ -54,9 +54,9 @@ service GatewayService {
     }
 
     rpc ListUsers(user_base.ListUsersRequest) returns (user_base.ListUsersResponse) {
-      option (google.api.http) = {
-          post: "/v1/users:list"
-          body: "*"
+        option (google.api.http) = {
+            post: "/v1/users:list"
+            body: "*"
         };
     }
 
@@ -68,16 +68,23 @@ service GatewayService {
     }
 
     rpc CreateMessage(message_base.CreateMessageRequest) returns (message_base.CreateMessageResponse) {
-      option (google.api.http) = {
-        post: "/v1/message"
-        body: "*"
+        option (google.api.http) = {
+            post: "/v1/message"
+            body: "*"
       };
     }
 
     rpc CreateConversation(conversation.CreateConversationRequest) returns (conversation.CreateConversationResponse) {
-      option (google.api.http) = {
-        post: "/v1/conversation"
-        body: "*"
-      };
+        option (google.api.http) = {
+            post: "/v1/conversation"
+            body: "*"
+        };
+    }
+
+    rpc ListMessages(message_base.ListMessagesRequest) returns (message_base.ListMessagesResponse) {
+        option (google.api.http) = {
+            get: "/v1/conversations/{filter.conversation_id}/messages"
+        };
     }
 }
+

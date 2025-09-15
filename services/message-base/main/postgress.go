@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/message-base/proto"
@@ -16,6 +17,7 @@ import (
 
 type StorageAccess interface {
 	createMessage(ctx context.Context, m *pb.Message) (*pb.Message, error)
+	listMessages(ctx context.Context, req *pb.ListMessagesRequest) (*pb.ListMessagesResponse, error)
 }
 
 type PostgresAccess struct{ db *sql.DB }
@@ -62,4 +64,50 @@ func (pa *PostgresAccess) checkExists(ctx context.Context, table string, id int6
 		return false, err
 	}
 	return true, nil
+}
+
+func (pa *PostgresAccess) listMessages(ctx context.Context, req *pb.ListMessagesRequest) (*pb.ListMessagesResponse, error) {
+
+	query := `
+        SELECT id, conversation_id, sender_id, content, created_at
+        FROM "Message"
+        WHERE conversation_id = $1
+        ORDER BY created_at ASC;
+    `
+
+	rows, err := pa.db.QueryContext(ctx, query, req.Filter.ConversationId)
+	if err != nil {
+		log.Printf("Error querying messages: %v", err)
+		return nil, status.Errorf(codes.Internal, "Failed to retrieve messages")
+	}
+	defer rows.Close()
+
+	var messages []*pb.Message
+	for rows.Next() {
+
+		var tmp pb.Message
+		var createdAt time.Time
+
+		err := rows.Scan(
+			&tmp.Id,
+			&tmp.ConversationId,
+			&tmp.SenderId,
+			&tmp.Content,
+			&createdAt,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Error processing message data: %v", err)
+		}
+
+		tmp.CreatedAt = timestamppb.New(createdAt)
+		messages = append(messages, &tmp)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, status.Errorf(codes.Internal, "Error retrieving messages from the database: %v", err)
+	}
+
+	return &pb.ListMessagesResponse{
+		Messages: messages,
+	}, nil
 }

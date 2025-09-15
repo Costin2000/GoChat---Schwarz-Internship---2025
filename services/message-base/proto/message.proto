@@ -8,6 +8,7 @@ option go_package = "github.com/Costin2000/GoChat---Schwarz-Internship---2025/se
 
 service MessageService {
     rpc CreateMessage (CreateMessageRequest) returns (CreateMessageResponse);
+    rpc ListMessages (ListMessagesRequest) returns (ListMessagesResponse);
 }
 
 message Message {
@@ -24,4 +25,16 @@ message CreateMessageRequest {
 
 message CreateMessageResponse {
     Message message = 1;
+}
+
+message ListMessagesRequest {
+    ListMessagesFilter filter = 1;
+}
+
+message ListMessagesResponse {
+    repeated Message messages = 1;
+}
+
+message ListMessagesFilter {
+    int64 conversation_id = 1;
 }
