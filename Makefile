@@ -19,11 +19,7 @@ down:
 
 down-hard:
 	@echo "==> Stopping all Docker Compose services and deleting the volumes..."
-<<<<<<< HEAD
-	docker compose --env-file ./.env --env-file ./db/.env down -v
-=======
 	docker compose --env-file ./.env --env-file ./db/.env -v down
->>>>>>> 76e07b1 (feat: Work in progress on register page)
 	rm -rf ./db-data
 
 logs:
@@ -87,3 +83,27 @@ help:
 	@echo "  tidy           	 Run 'go mod tidy' for all services."
 	@echo "  docker-build   	 Build Docker images for all services individually."
 	@echo "  clean          	 Clean build artifacts for all services."
+
+PROTOC ?= protoc
+
+FRONT_DST := frontend/src/proto
+
+TS_PLUGIN := ./frontend/node_modules/.bin/protoc-gen-ts_proto
+
+FRONT_PROTOS := \
+  services/user-base/proto/userbase.proto
+
+TS_PROTO_OPTS := esModuleInterop=true,outputServices=none,useDate=true,oneof=unions,useProtoFieldName=true
+
+.PHONY: frontend-proto
+frontend-proto:
+	@echo "==> Generating TS types with ts-proto..."
+	@test -x $(TS_PLUGIN) || (echo "Installing ts-proto in frontend..."; cd frontend && npm i -D ts-proto)
+	@command -v $(PROTOC) >/dev/null 2>&1 || (echo "ERROR: protoc not found. Install it (e.g. 'brew install protobuf' / 'apt install protobuf-compiler')."; exit 1)
+	mkdir -p $(FRONT_DST)
+	$(PROTOC) -I . \
+	  --plugin=protoc-gen-ts_proto=$(TS_PLUGIN) \
+	  --ts_proto_out=$(FRONT_DST) \
+	  --ts_proto_opt=$(TS_PROTO_OPTS) \
+	  $(FRONT_PROTOS)
+	@echo "==> Done. Types emitted to $(FRONT_DST)"
