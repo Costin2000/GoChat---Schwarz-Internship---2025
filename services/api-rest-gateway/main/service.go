@@ -170,6 +170,18 @@ func (s *server) FetchUserFriends(ctx context.Context, req *aggrpb.FetchUserFrie
 	return s.aggrClient.FetchUserFriends(c, req)
 }
 
+func (s *server) CreateMessage(ctx context.Context, req *messagepb.CreateMessageRequest) (*messagepb.CreateMessageResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.messageClient.CreateMessage(c, req)
+}
+
+func (s *server) ListMessages(ctx context.Context, req *messagepb.ListMessagesRequest) (*messagepb.ListMessagesResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.messageClient.ListMessages(c, req)
+}
+
 func (s *server) CreateConversation(ctx context.Context, req *conversationpb.CreateConversationRequest) (*conversationpb.CreateConversationResponse, error) {
 	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
 	defer cancel()
@@ -228,10 +240,4 @@ func check(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %v", msg, err)
 	}
-}
-
-func (s *server) CreateMessage(ctx context.Context, req *messagepb.CreateMessageRequest) (*messagepb.CreateMessageResponse, error) {
-	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
-	defer cancel()
-	return s.messageClient.CreateMessage(c, req)
 }

@@ -14,7 +14,8 @@ GOOGLEAPIS=$(GOPATH_DIR)/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@*/third_
 M_AUTH=Mservices/auth/proto/auth.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/auth/proto
 M_FRIENDREQUEST=Mservices/friend-request-base/proto/friendrequest.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto
 M_AGGR=Mservices/aggregator/proto/aggregator.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/aggregator/proto
-
+M_CONV=Mservices/conversation-base/proto/conversation.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/conversation-base/proto
+M_MSG=Mservices/message-base/proto/message.proto=github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/message-base/proto
 .PHONY: all proto build run tidy up down docker-build docker-run
 
 all: up
@@ -32,14 +33,20 @@ proto:
 		--go_opt=$(M_AUTH) \
 		--go_opt=$(M_FRIENDREQUEST) \
 		--go_opt=$(M_AGGR) \
+		--go_opt=$(M_CONV) \
+		--go_opt=$(M_MSG) \
 		--go-grpc_out=$(GO_GRPC_OUT) \
 		--go-grpc_opt=$(M_AUTH) \
 		--go-grpc_opt=$(M_FRIENDREQUEST) \
 		--go-grpc_opt=$(M_AGGR) \
+		--go-grpc_opt=$(M_CONV) \
+		--go-grpc_opt=$(M_MSG) \
 		--grpc-gateway_out=$(GW_OUT) \
 		--grpc-gateway_opt=$(M_AUTH) \
 		--grpc-gateway_opt=$(M_FRIENDREQUEST) \
 		--grpc-gateway_opt=$(M_AGGR) \
+		--grpc-gateway_opt=$(M_CONV) \
+		--grpc-gateway_opt=$(M_MSG) \
 		$(PROTO_FILE)
 
 tidy:
