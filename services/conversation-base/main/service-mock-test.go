@@ -9,14 +9,20 @@ import (
 
 type mockStorage struct {
 	createConversationFunc func(ctx context.Context, req *pb.CreateConversationRequest) (*pb.CreateConversationResponse, error)
+	listConversationsFunc  func(ctx context.Context, req *pb.ListConversationsRequest) (*pb.ListConversationsResponse, error)
 }
 
 func (m *mockStorage) createConversation(ctx context.Context, req *pb.CreateConversationRequest) (*pb.CreateConversationResponse, error) {
 	return m.createConversationFunc(ctx, req)
 }
 
+func (m *mockStorage) listConversations(ctx context.Context, req *pb.ListConversationsRequest) (*pb.ListConversationsResponse, error) {
+	return m.listConversationsFunc(ctx, req)
+}
+
 type StorageMockOptions struct {
 	createConversationFunc func(ctx context.Context, req *pb.CreateConversationRequest) (*pb.CreateConversationResponse, error)
+	listConversationsFunc  func(ctx context.Context, req *pb.ListConversationsRequest) (*pb.ListConversationsResponse, error)
 }
 
 func newMockStorageAccess(opts StorageMockOptions) StorageAccess {
@@ -30,6 +36,7 @@ func newMockStorageAccess(opts StorageMockOptions) StorageAccess {
 
 	return &mockStorage{
 		createConversationFunc: createConversationFunc,
+		listConversationsFunc:  opts.listConversationsFunc,
 	}
 }
 

@@ -188,6 +188,12 @@ func (s *server) CreateConversation(ctx context.Context, req *conversationpb.Cre
 	return s.conversationClient.CreateConversation(c, req)
 }
 
+func (s *server) ListConversations(ctx context.Context, req *conversationpb.ListConversationsRequest) (*conversationpb.ListConversationsResponse, error) {
+	c, cancel := context.WithTimeout(ctx, s.upstreamTO)
+	defer cancel()
+	return s.conversationClient.ListConversations(c, req)
+}
+
 func env(k, def string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
