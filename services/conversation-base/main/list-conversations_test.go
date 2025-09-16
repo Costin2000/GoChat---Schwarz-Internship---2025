@@ -11,6 +11,8 @@ import (
 	errchecks "github.com/Costin2000/GoChat---Schwarz-Internship---2025/pkg"
 	pb "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/conversation-base/proto"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -34,12 +36,13 @@ func Test_ListConversations(t *testing.T) {
 		expected    *pb.ListConversationsResponse
 	}{
 		{
-			name: "Happy path - all conversations",
+			name: "Error - missing userId",
 			req:  &pb.ListConversationsRequest{},
 			mockFunc: func(ctx context.Context, req *pb.ListConversationsRequest) (*pb.ListConversationsResponse, error) {
-				return successResp, nil
+				return nil, status.Errorf(codes.InvalidArgument, "user_id must be provided")
 			},
-			expected: successResp,
+			expecterErr: errchecks.IsInvalidArgument(nil),
+			expected:    nil,
 		},
 		{
 			name: "Happy path - filtered by user",
@@ -154,16 +157,7 @@ func TestListConversations_Integration(t *testing.T) {
 		t.Fatalf("Failed to create conversation 2: %v", err)
 	}
 
-	// Test 1: List all conversations
-	allResp, err := svc.ListConversations(context.Background(), &pb.ListConversationsRequest{})
-	if err != nil {
-		t.Fatalf("ListConversations (all) failed: %v", err)
-	}
-	if len(allResp.Conversations) != 2 {
-		t.Errorf("Expected 2 conversations, got %d", len(allResp.Conversations))
-	}
-
-	// Test 2: Filter by user2 (Bob)
+	// Test 1: Filter by user2 (Bob)
 	filterResp, err := svc.ListConversations(context.Background(), &pb.ListConversationsRequest{
 		UserId: fmt.Sprintf("%d", user2ID),
 	})
@@ -174,7 +168,7 @@ func TestListConversations_Integration(t *testing.T) {
 		t.Errorf("Expected 2 conversations for user %d, got %d", user2ID, len(filterResp.Conversations))
 	}
 
-	// Test 3: Filter by user1 (Alice)
+	// Test 2: Filter by user1 (Alice)
 	aliceResp, err := svc.ListConversations(context.Background(), &pb.ListConversationsRequest{
 		UserId: fmt.Sprintf("%d", user1ID),
 	})

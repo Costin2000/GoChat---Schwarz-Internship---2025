@@ -78,31 +78,22 @@ func (pa *PostgresAccess) createConversation(ctx context.Context, req *proto.Cre
 }
 
 func (pa *PostgresAccess) listConversations(ctx context.Context, req *proto.ListConversationsRequest) (*proto.ListConversationsResponse, error) {
-	var rows *sql.Rows
-	var err error
-
-	if req.UserId != "" {
-		userID, convErr := strconv.ParseInt(req.UserId, 10, 64)
-		if convErr != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid user_id format: %v", convErr)
-		}
-
-		query := `
-			SELECT id, user1_id, user2_id, created_at, updated_at
-			FROM "Conversation"
-			WHERE user1_id = $1 OR user2_id = $1
-			ORDER BY updated_at DESC;
-		`
-		rows, err = pa.db.QueryContext(ctx, query, userID)
-	} else {
-		query := `
-			SELECT id, user1_id, user2_id, created_at, updated_at
-			FROM "Conversation"
-			ORDER BY updated_at DESC;
-		`
-		rows, err = pa.db.QueryContext(ctx, query)
+	if req.UserId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "user_id must be provided")
 	}
 
+	userID, convErr := strconv.ParseInt(req.UserId, 10, 64)
+	if convErr != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user_id format: %v", convErr)
+	}
+
+	query := `
+		SELECT id, user1_id, user2_id, created_at, updated_at
+		FROM "Conversation"
+		WHERE user1_id = $1 OR user2_id = $1
+		ORDER BY updated_at DESC;
+	`
+	rows, err := pa.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list conversations: %v", err)
 	}
