@@ -21,6 +21,7 @@ const (
 
 type StorageAccess interface {
 	createConversation(ctx context.Context, req *proto.CreateConversationRequest) (*proto.CreateConversationResponse, error)
+	listConversations(ctx context.Context, req *proto.ListConversationsRequest) (*proto.ListConversationsResponse, error)
 }
 
 type PostgresAccess struct {
@@ -74,4 +75,50 @@ func (pa *PostgresAccess) createConversation(ctx context.Context, req *proto.Cre
 			UpdatedAt: timestamppb.New(updatedAt),
 		},
 	}, nil
+}
+
+func (pa *PostgresAccess) listConversations(ctx context.Context, req *proto.ListConversationsRequest) (*proto.ListConversationsResponse, error) {
+	if req.UserId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "user_id must be provided")
+	}
+
+	userID, convErr := strconv.ParseInt(req.UserId, 10, 64)
+	if convErr != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user_id format: %v", convErr)
+	}
+
+	query := `
+		SELECT id, user1_id, user2_id, created_at, updated_at
+		FROM "Conversation"
+		WHERE user1_id = $1 OR user2_id = $1
+		ORDER BY updated_at DESC;
+	`
+	rows, err := pa.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list conversations: %v", err)
+	}
+	defer rows.Close()
+
+	var conversations []*proto.Conversation
+	for rows.Next() {
+		var (
+			convID  int64
+			user1ID int64
+			user2ID int64
+			created time.Time
+			updated time.Time
+		)
+		if err := rows.Scan(&convID, &user1ID, &user2ID, &created, &updated); err != nil {
+			return nil, status.Errorf(codes.Internal, "error scanning row: %v", err)
+		}
+		conversations = append(conversations, &proto.Conversation{
+			Id:        strconv.FormatInt(convID, 10),
+			User1Id:   strconv.FormatInt(user1ID, 10),
+			User2Id:   strconv.FormatInt(user2ID, 10),
+			CreatedAt: timestamppb.New(created),
+			UpdatedAt: timestamppb.New(updated),
+		})
+	}
+
+	return &proto.ListConversationsResponse{Conversations: conversations}, nil
 }
