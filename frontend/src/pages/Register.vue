@@ -58,7 +58,7 @@
 
         <p v-if="error" class="text-danger small mb-2">{{ error }}</p>
 
-        <!-- added mt-3 for spacing above the button -->
+        <!-- spacing peste buton -->
         <button class="btn btn-success w-100 mt-3" :disabled="loading">
           <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
           Create account
@@ -87,13 +87,13 @@ import type { CreateUserRequest } from '@/proto/services/user-base/proto/userbas
 const router = useRouter()
 
 const first_name = ref('')
-const last_name = ref('')
-const user_name = ref('')
-const email = ref('')
-const password = ref('')
+const last_name  = ref('')
+const user_name  = ref('')
+const email      = ref('')
+const password   = ref('')
 
 const loading = ref(false)
-const error = ref<string | null>(null)
+const error   = ref<string | null>(null)
 
 type CreateUserResponse = {
   token?: string
@@ -120,10 +120,21 @@ async function onSubmit() {
       body: payload,
     })
 
-    const token = data?.token
-    const uid = data?.user?.id ?? data?.user_id
+    let token = data?.token
+    let uid   = data?.user?.id ?? data?.user_id
+
+    if (!token || uid == null) {
+      const loginResp = await apiFetch<{ token: string; user_id: number | string }>('/v1/auth/login', {
+        method: 'POST',
+        body: { email: email.value, password: password.value },
+      })
+      token = loginResp.token
+      uid   = loginResp.user_id
+    }
+
     if (token && uid != null) {
       saveAuth(token, uid)
+      localStorage.setItem('token', String(token))
       router.push('/home')
       return
     }

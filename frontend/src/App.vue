@@ -1,19 +1,34 @@
 <template>
-  <div>
-    <nav class="navbar navbar-expand navbar-light bg-light px-3">
-      <a class="navbar-brand" href="/">GoChat</a>
-      <div class="navbar-nav">
-        <router-link class="nav-link" to="/">Home</router-link>
-        <router-link class="nav-link" to="/register">Register</router-link>
-        <router-link class="nav-link" to="/login">Login</router-link>
-      </div>
+  <header class="topbar d-flex align-items-center justify-content-between px-3 py-2">
+    <div class="brand fw-bold" role="button" @click="goBrand">GoChat</div>
+    <nav class="d-flex gap-3">
+      <RouterLink v-if="showRegisterLink" to="/register">Register</RouterLink>
+      <!-- Pe Register: arătăm doar Login -->
+      <RouterLink v-if="showLoginLink" to="/login">Login</RouterLink>
     </nav>
+  </header>
 
-    <div class="container py-4">
-      <router-view />
-    </div>
-  </div>
+  <RouterView />
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+
+const isAuth = computed(() => !!localStorage.getItem('auth_token'))
+
+const showRegisterLink = computed(() => !isAuth.value && route.name !== 'Register')
+const showLoginLink = computed(() => !isAuth.value && route.name !== 'Login')
+
+function goBrand() {
+  router.push(isAuth.value ? '/home' : '/login')
+}
 </script>
+
+<style scoped>
+.topbar { background: rgba(0,0,0,.05); backdrop-filter: blur(4px); }
+.brand { cursor: pointer; }
+</style>
