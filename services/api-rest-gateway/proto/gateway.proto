@@ -89,7 +89,7 @@ service GatewayService {
 
     rpc ListConversations(conversation.ListConversationsRequest) returns (conversation.ListConversationsResponse) {
         option (google.api.http) = {
-            post: "/v1/conversations:list"
+            post: "/v1/conversations"
             body: "*"
         };
     }
