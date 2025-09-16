@@ -58,7 +58,8 @@
 
         <p v-if="error" class="text-danger small mb-2">{{ error }}</p>
 
-        <button class="btn btn-success w-100" :disabled="loading">
+        <!-- added mt-3 for spacing above the button -->
+        <button class="btn btn-success w-100 mt-3" :disabled="loading">
           <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
           Create account
         </button>

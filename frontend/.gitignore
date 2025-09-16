@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.env.development
+# Ignore auto-generated protobuf files for the frontend
+/src/proto
