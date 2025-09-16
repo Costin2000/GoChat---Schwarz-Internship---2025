@@ -60,7 +60,7 @@ build: proto tidy
 run:
 	@echo "==> Running service locally..."
 	# Note: This recipe assumes the auth and friend-request services are already running.
-	GATEWAY_HTTP_ADDR=:8080 USER_BASE_ADDR=localhost:50051 AUTH_ADDR=localhost:50053 FRIEND_REQUEST_ADDR=localhost:50052 AGGR_REQUEST_ADDR=50054 go run ./main
+	GATEWAY_HTTP_ADDR=:8080 USER_BASE_ADDR=localhost:50051 AUTH_ADDR=localhost:50053 FRIEND_REQUEST_ADDR=localhost:50052 AGGR_REQUEST_ADDR=50054 MESSAGE_BASE_ADDR=localhost:50055 CONVERSATION_ADDR=localhost:50056 go run ./main
 
 docker-build:
 	@echo "==> Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
