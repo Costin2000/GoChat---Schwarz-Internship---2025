@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/pages/Login.vue'
 import Register from '@/pages/Register.vue'
 import Home from '@/pages/Home.vue'
+import FindFriends from '@/pages/FindFriends.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -11,6 +12,8 @@ const routes = [
   { path: '/home', name: 'Home', component: Home, meta: { requiresAuth: true } },
 
   { path: '/:pathMatch(.*)*', redirect: '/login' },
+  {
+    path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true}}
 ]
 
 export const router = createRouter({

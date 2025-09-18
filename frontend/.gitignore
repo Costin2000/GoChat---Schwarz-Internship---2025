@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 .env.development
 # Ignore auto-generated protobuf files for the frontend
-/src/proto
+/src/proto/*
