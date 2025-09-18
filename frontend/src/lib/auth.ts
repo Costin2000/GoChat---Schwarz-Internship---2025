@@ -7,6 +7,10 @@ export function getToken(): string | null {
   return localStorage.getItem('token') || localStorage.getItem('auth_token');
 }
 
+export function getUserId(): string | null {
+  return localStorage.getItem('user_id')
+}
+
 export function clearAuth() {
   localStorage.removeItem('token');
   localStorage.removeItem('auth_token');
