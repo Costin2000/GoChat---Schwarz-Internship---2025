@@ -4,7 +4,7 @@
 
     <div v-if="loading" class="text-green-200">Loading...</div>
     <div v-else-if="error" class="text-red-300">{{ error }}</div>
-    <div v-else-if="users.length === 0" class="text-green-200">No users available.</div>
+    <div v-else-if="users.length === 0" class="text-white">No users available.</div>
 
     <ul v-else class="space-y-2">
       <li
@@ -18,7 +18,7 @@
         </div>
         <button
           @click="sendFriendRequest(u.id)"
-          class="bg-green-200 hover:bg-green-400 text-blue-300 px-4 py-1.5 rounded-lg shadow transition-colors"
+          class="add-friend-btn"
         >
           Add Friend
         </button>
@@ -37,6 +37,21 @@
 .user-handle {
   color: #35e3ef;
   font-size: 0.9rem;
+}
+
+.add-friend-btn {
+  background-color: #257654;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  transition: background-color 0.2s ease-in-out;
+}
+.add-friend-btn:hover {
+  background-color: #159f65
 }
 </style>
 
