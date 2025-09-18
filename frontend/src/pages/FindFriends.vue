@@ -51,7 +51,7 @@
   transition: background-color 0.2s ease-in-out;
 }
 .add-friend-btn:hover {
-  background-color: #159f65 /* This is the new color on hover */
+  background-color: #159f65
 }
 </style>
 
