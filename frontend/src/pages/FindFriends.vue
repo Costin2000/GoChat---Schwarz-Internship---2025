@@ -44,14 +44,9 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
-import { apiFetch } from '@/lib/api';
+import { User, fetchNonFriends, createFriendRequest } from '@/lib/api';
 
-interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  user_name: string,
-}
+
 
 const router = useRouter();
 
@@ -67,6 +62,7 @@ onMounted(async () => {
 
   try {
     const res = await fetchNonFriends(getUserId());
+    res.users.sort((a: User, b: User) => a.user_name.localeCompare(b.user_name));
     users.value = res.users;
   } catch (e: any) {
     error.value = e.message;
@@ -78,32 +74,10 @@ onMounted(async () => {
 async function sendFriendRequest(userId: string) {
   try {
     await createFriendRequest(getUserId(), userId);
-    users.value = users.value.filter((u) => u.id !== userId);
+    users.value = users.value.filter((u: User) => u.id !== userId);
   } catch (e: any) {
     error.value = `Could not send request: ${e.message}`;
   }
-}
-
-function fetchNonFriends(userId: string) {
-  return apiFetch<{ users: User[] }>(
-    '/v1/friends',
-    {
-      method: "POST",
-      json: {
-        user_id: userId,
-        show_friends: false}
-    }
-  );
-}
-
-function createFriendRequest(senderId: string, receiverId: string) {
-  return apiFetch("/v1/friend-request", {
-    method: "POST",
-    json: {
-      sender_id: senderId,
-      receiver_id: receiverId
-    }
-  });
 }
 
 </script>

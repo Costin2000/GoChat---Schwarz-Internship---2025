@@ -26,3 +26,33 @@ export async function apiFetch<T = any>(path: string, opts: Opts = {}) {
 
   return data as T
 }
+
+export interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_name: string,
+}
+
+export function fetchNonFriends(userId: string) {
+  return apiFetch<{ users: User[] }>(
+    '/v1/friends',
+    {
+      method: "POST",
+      json: {
+        user_id: userId,
+        show_friends: false
+      }
+    }
+  );
+}
+
+export function createFriendRequest(senderId: string, receiverId: string) {
+  return apiFetch("/v1/friend-request", {
+    method: "POST",
+    json: {
+      sender_id: senderId,
+      receiver_id: receiverId
+    }
+  });
+}

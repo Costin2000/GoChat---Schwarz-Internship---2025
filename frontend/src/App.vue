@@ -33,9 +33,13 @@ function goBrand() {
 
 <style scoped>
 .topbar { background: rgba(0,0,0,.05); backdrop-filter: blur(4px); }
-.brand { cursor: pointer; }
-.nav-link,
+.brand { cursor: pointer; color: aquamarine;}
+.nav-link {
+  color: rgb(191, 234, 233);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
 .nav-link.router-link-active,
-.nav-link.router-link-exact-active { color: aquamarine; text-decoration: none; transition: color 0.2s ease-in-out; }
-.nav-link:hover { color: rgb(48, 174, 132); }
+.nav-link.router-link-exact-active { color: rgb(191, 234, 233); text-decoration: underline }
+.nav-link:hover { color: rgb(171, 206, 205); }
 </style>
