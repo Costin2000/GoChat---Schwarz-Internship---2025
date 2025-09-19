@@ -3,6 +3,7 @@
     <div class="d-flex align-items-center gap-3">
       <div class="brand fw-bold" role="button" @click="goBrand">GoChat</div>
       <RouterLink v-if="isAuth" to="/find-friends" class="nav-link">Find Friends</RouterLink>
+      <RouterLink v-if="isAuth" to="/friend-requests" class="nav-link">Friend Requests</RouterLink>
     </div>
     <nav class="d-flex gap-3">
       <RouterLink v-if="showRegisterLink" to="/register">Register</RouterLink>
