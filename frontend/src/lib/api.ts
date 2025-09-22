@@ -31,7 +31,23 @@ export interface User {
   id: string;
   first_name: string;
   last_name: string;
-  user_name: string,
+  user_name: string;
+}
+
+export interface Conversation {
+  id :string;
+  user1_id: string;
+  user2_id: string;
+  created_at: Date | undefined;
+  updated_at: Date | undefined;
+}
+
+export interface Message {
+  id: number;
+  conversationId: number;
+  sender_id: number;
+  content: string;
+  createdAt: Date | undefined;
 }
 
 export function fetchNonFriends(userId: string) {
@@ -55,4 +71,50 @@ export function createFriendRequest(senderId: string, receiverId: string) {
       receiver_id: receiverId
     }
   });
+}
+
+export function listMessages(conversationId: string) {
+  return apiFetch(`/v1/conversations/${conversationId}/messages`, {
+    method: "GET"
+  });
+}
+
+export function listConversations(userId: string) {
+  return apiFetch("/v1/conversations", {
+    method: "POST",
+    json: {
+      user_id: userId,
+    }
+  });
+}
+
+export function createMessage(conversationId: string, senderId: string, content: string) {
+  return apiFetch("/v1/message", {
+    method: "POST",
+    json: {
+      message: {
+        conversation_id: parseInt(conversationId, 10),
+        sender_id: parseInt(senderId, 10),
+        content: content
+      }
+    }
+  });
+}
+
+export async function getUser(id: string) {
+  const response = await apiFetch<{ users: User[] }>("/v1/users:list", {
+    method: "POST",
+    json: {
+      page_size: 10,
+      filters: [
+        {
+          user_ids: {
+            user_id: [parseInt(id, 10)],
+          },
+        },
+      ],
+    },
+  });
+
+  return response.users && response.users.length > 0 ? response.users[0] : null;
 }

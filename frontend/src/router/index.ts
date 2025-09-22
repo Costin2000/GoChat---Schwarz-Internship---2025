@@ -4,6 +4,7 @@ import Register from '@/pages/Register.vue'
 import Home from '@/pages/Home.vue'
 import FindFriends from '@/pages/FindFriends.vue'
 import FriendRequests from '@/pages/FriendRequests.vue'
+import Conversations from '@/pages/Conversations.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -13,10 +14,9 @@ const routes = [
   { path: '/home', name: 'Home', component: Home, meta: { requiresAuth: true } },
 
   { path: '/:pathMatch(.*)*', redirect: '/login' },
-  {
-    path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true}},
-
-  {path: '/friend-requests', name: 'FriendRequests', component: FriendRequests, meta: { requiresAuth: true }},
+  { path: '/conversations', name: 'Conversations', component: Conversations, meta: { requiresAuth: true } },
+  { path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true}  },
+  { path: '/friend-requests', name: 'FriendRequests', component: FriendRequests, meta: { requiresAuth: true } },
 ]
 
 export const router = createRouter({
