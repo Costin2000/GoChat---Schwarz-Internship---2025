@@ -75,8 +75,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, createConversation } from "@/lib/api";
 import { getToken, getUserId } from "@/lib/auth";
+import { Conversation } from '@/proto/services/conversation-base/proto/conversation'
 
 const router = useRouter();
 
@@ -189,8 +190,12 @@ async function updateRequest(id: string, status: "STATUS_ACCEPTED" | "STATUS_REJ
         field_mask: "status",
       },
     });
-
+    const accReq = requests.value.find((r) => r.id === id)
+    console.log(accReq)
     requests.value = requests.value.filter((r) => r.id !== id);
+    if (status == "STATUS_ACCEPTED") {
+      await createConversation(accReq?.receiver_id, accReq?.sender_id)
+    }
   } catch (e: any) {
     error.value = e?.message || `Failed to ${status === "STATUS_ACCEPTED" ? "accept" : "reject"} request`;
   } finally {

@@ -1,4 +1,6 @@
+import { Conversation } from '../proto/services/conversation-base/proto/conversation'
 import { authHeader } from './auth'
+import { User } from '@/proto/services/user-base/proto/userbase'
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 type Opts = RequestInit & { json?: any }
@@ -27,28 +29,6 @@ export async function apiFetch<T = any>(path: string, opts: Opts = {}) {
   return data as T
 }
 
-export interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  user_name: string;
-}
-
-export interface Conversation {
-  id :string;
-  user1_id: string;
-  user2_id: string;
-  created_at: Date | undefined;
-  updated_at: Date | undefined;
-}
-
-export interface Message {
-  id: number;
-  conversationId: number;
-  sender_id: number;
-  content: string;
-  createdAt: Date | undefined;
-}
 
 export function fetchNonFriends(userId: string) {
   return apiFetch<{ users: User[] }>(
@@ -117,4 +97,14 @@ export async function getUser(id: string) {
   });
 
   return response.users && response.users.length > 0 ? response.users[0] : null;
+}
+
+export async function createConversation (id1: string, id2: string) {
+  return await apiFetch<{ conversation: Conversation }>("/v1/conversation", {
+    method: "POST",
+    json: {
+      user1_id: id1,
+      user2_id: id2,
+    }
+  });
 }

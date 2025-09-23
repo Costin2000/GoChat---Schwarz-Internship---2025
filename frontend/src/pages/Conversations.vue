@@ -19,16 +19,16 @@
             </div>
           </li>
         </ul>
-        <div v-else class="info-text">No conversations found.</div>
+        <div v-else class="info-text">No conversations found. Make some friends to start chatting! </div>
       </div>
 
       <div class="messages-panel">
-        <div v-if="!selectedConversationId" class="info-text placeholder">
+        <div v-if="!selectedConversationId" class="info-text ">
           Select a conversation to view messages
         </div>
         <div v-else class="message-view-container">
           <div v-if="messagesLoading" class="loading-text">Loading messages...</div>
-          <div v-else-if="messages.length === 0" class="info-text">
+        <div v-else-if="messages.length === 0" class="info-text initial-message">
             No messages yet. Say hello!
           </div>
           <ul v-else ref="messageListEl" class="messages-list">
@@ -73,6 +73,10 @@
   padding: 2rem;
 }
 
+.initial-message {
+  height: 100%;
+}
+
 .error-text {
   color: #ff8a8a;
 }
@@ -82,7 +86,7 @@
   flex-grow: 1;
   gap: 1rem;
   border: 1px solid #35e3ef40;
-  border-radius: 0.5rem;
+  border-radius: 1.5rem;
   overflow: hidden;
 }
 
@@ -186,6 +190,7 @@
 
 .message-item.sent {
   justify-content: flex-end;
+  align-self: flex-end;
 }
 
 .sent .message-bubble {
@@ -245,14 +250,15 @@ import { ref, onMounted, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
 import {
-  User,
-  Conversation,
-  Message,
   listMessages,
   listConversations,
   createMessage,
   getUser,
 } from '@/lib/api';
+
+import { User } from '@/proto/services/user-base/proto/userbase'
+import { Conversation } from '@/proto/services/conversation-base/proto/conversation'
+import { Message } from '@/proto/services/message-base/proto/messagebase'
 
 const router = useRouter();
 console.log('Component loaded. Current User ID:', getUserId());

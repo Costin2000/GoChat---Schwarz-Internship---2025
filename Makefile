@@ -95,7 +95,8 @@ FRONT_PROTOS := \
   services/auth/proto/auth.proto \
   services/friend-request-base/proto/friendrequest.proto \
   services/message-base/proto/message.proto \
-  services/aggregator/proto/aggregator.proto
+  services/aggregator/proto/aggregator.proto \
+  services/conversation-base/proto/conversation.proto
 
 TS_PROTO_OPTS := esModuleInterop=true,outputServices=grpc-web,useDate=true,oneof=unions,useProtoFieldName=true
 
