@@ -18,7 +18,7 @@ type userBaseClient interface {
 	GetUser(ctx context.Context, in *userbasepb.GetUserRequest, opts ...grpc.CallOption) (*userbasepb.User, error)
 }
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+var jwtSecret = []byte(os.Getenv("AUTH_JWT_SECRET"))
 
 type authServer struct {
 	proto.UnimplementedAuthServiceServer
@@ -35,7 +35,7 @@ func main() {
 		userBaseAddr = "user-base:50051"
 	}
 
-	conn, err := grpc.Dial(userBaseAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(userBaseAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect to user-base service: %v", err)
 	}
