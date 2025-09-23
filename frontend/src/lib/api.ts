@@ -1,6 +1,6 @@
 import { Conversation } from '../proto/services/conversation-base/proto/conversation'
 import { authHeader } from './auth'
-import { User } from '@/proto/services/user-base/proto/userbase'
+import { User } from '../proto/services/user-base/proto/userbase'
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 type Opts = RequestInit & { json?: any }

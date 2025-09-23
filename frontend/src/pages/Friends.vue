@@ -1,10 +1,8 @@
 <template>
   <AuthLayout>
-    <AuthCard title="Your Friends">
+    <AuthCard title="Your Friends" maxWidth="900px">
       
-      <!-- All the specific content for the friends list goes here -->
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <!-- The title is now passed as a prop, so we can remove the h3 -->
         <div></div>
         <button class="btn btn-outline-secondary" :disabled="loading" @click="refresh">
           <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
@@ -31,8 +29,10 @@
           </div>
 
           <button class="btn btn-success"
-                  @click="openConversation(f)">
-            Message
+                  @click="openConversation(f)"
+                  :disabled="isOpeningConvo === f.id">
+            <span v-if="isOpeningConvo === f.id" class="spinner-border spinner-border-sm" />
+            <span v-else>Message</span>
           </button>
         </li>
       </ul>
@@ -52,30 +52,30 @@
 <script setup lang="ts">
 import AuthLayout from '@/components/AuthLayout.vue'
 import AuthCard from '@/components/AuthCard.vue'
-
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, listConversations } from '@/lib/api'
+import { getUserId } from '@/lib/auth'
+import type { Conversation } from '@/proto/services/conversation-base/proto/conversation'
 
 type Friend = {
-  id: number | string
+  id: string
   first_name?: string
   last_name?: string
   user_name?: string
-  email?: string
-  conversation_id?: number | string | null
 }
 
 const PAGE_SIZE = 10
 const friends = ref<Friend[]>([])
 const nextToken = ref<string>("")
 const loading = ref(false)
+const isOpeningConvo = ref<string | null>(null) // To show a spinner on the clicked button
 const router = useRouter()
 
 function fullName(f: Friend) {
   const fn = f.first_name?.trim() || ''
   const ln = f.last_name?.trim() || ''
-  return `${fn} ${ln}`.trim() || f.user_name || f.email || String(f.id)
+  return `${fn} ${ln}`.trim() || f.user_name || String(f.id)
 }
 
 function initials(f: Friend) {
@@ -89,7 +89,7 @@ function initials(f: Friend) {
 async function fetchFriends(token?: string) {
   loading.value = true
   try {
-    const userId = localStorage.getItem('user_id')
+    const userId = getUserId()
     const body: any = { 
       user_id: userId, 
       page_size: PAGE_SIZE,
@@ -98,12 +98,10 @@ async function fetchFriends(token?: string) {
     
     if (token) body.next_page_token = token
 
-    console.log("SENDING REQUEST BODY:", body);
     const res = await apiFetch<{ users: Friend[]; next_page_token?: string }>('/v1/friends', {
       method: 'POST',
       body,
     })
-    console.log("RECEIVED RESPONSE:", res);
 
     if (token) friends.value.push(...(res?.users ?? []))
     else     friends.value = res?.users ?? []
@@ -114,6 +112,53 @@ async function fetchFriends(token?: string) {
   }
 }
 
+async function openConversation(friend: Friend) {
+  isOpeningConvo.value = friend.id;
+  try {
+    const currentUserId = getUserId();
+    if (!currentUserId) {
+      router.push('/login');
+      return;
+    }
+    
+    console.log('--- STARTING CONVERSATION SEARCH ---');
+    console.log(`Searching for convo between ME (ID: "${currentUserId}") and FRIEND (ID: "${friend.id}")`);
+
+    const res = await listConversations(currentUserId);
+    const allConversations = (res.conversations || []) as any[];
+
+    console.log('Fetched conversations to search in:', allConversations);
+
+    const conversation = allConversations.find(c => {
+      const user1 = c.user1Id || c.user1_id;
+      const user2 = c.user2Id || c.user2_id;
+
+      console.log(`Checking convo ID ${c.id}: user1="${user1}", user2="${user2}"`);
+      const isMatch = (user1 === currentUserId && user2 === friend.id) ||
+                      (user2 === currentUserId && user1 === friend.id);
+      if (isMatch) {
+        console.log(`%cMATCH FOUND!`, 'color: #00ff00; font-weight: bold;', c);
+      }
+      return isMatch;
+    });
+
+    if (conversation) {
+      console.log('Navigating with existing conversation ID:', conversation.id);
+      router.push({ 
+        name: 'Conversations', 
+        query: { conversation: conversation.id } 
+      });
+    } else {
+      console.error('NO MATCH FOUND. Falling back to new_with_user.');
+      router.push({ name: 'Conversations', query: { new_with_user: friend.id } });
+    }
+  } catch (error) {
+    console.error("Failed to find or open conversation:", error);
+  } finally {
+    isOpeningConvo.value = null;
+  }
+}
+
 function loadMore() {
   if (!nextToken.value || loading.value) return
   fetchFriends(nextToken.value)
@@ -121,20 +166,18 @@ function loadMore() {
 function refresh() {
   if (loading.value) return
   nextToken.value = ''
+  friends.value = []
   fetchFriends()
 }
 
-function openConversation(f: Friend) {
-  if (f.conversation_id) router.push({ name: 'Conversation', params: { id: String(f.conversation_id) } })
-  else router.push({ name: 'Conversation', params: { id: 'new' }, query: { friend_id: String(f.id) } })
-}
-
-onMounted(() => { fetchFriends() })
+onMounted(() => { 
+  fetchFriends() 
+})
 </script>
 
 <style scoped>
 .list-group-item {
-  background-color: transparent; /* Makes list items blend with the card background */
+  background-color: transparent;
 }
 </style>
 

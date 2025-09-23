@@ -14,7 +14,7 @@ const appBg = computed(() => ({
 
 <style scoped>
 .auth-wrap {
-  min-height: 100vh;        
+  min-height: calc(100vh - 40px);        
   width: 100%;            
   display: grid;          
   place-items: center;

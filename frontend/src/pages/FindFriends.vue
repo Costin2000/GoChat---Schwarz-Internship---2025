@@ -1,6 +1,5 @@
 <template>
   <AuthLayout>
-    <AuthCard>
       <div class="p-4">
         <h1 class="text-xl font-bold mb-4 text-white">Find Friends</h1>
 
@@ -27,7 +26,6 @@
           </li>
         </ul>
       </div>
-    </AuthCard>
   </AuthLayout>
 </template>
 
