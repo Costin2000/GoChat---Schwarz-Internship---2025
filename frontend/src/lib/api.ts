@@ -1,4 +1,6 @@
+import { Conversation } from '../proto/services/conversation-base/proto/conversation'
 import { authHeader } from './auth'
+import { User } from '@/proto/services/user-base/proto/userbase'
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 type Opts = RequestInit & { json?: any }
@@ -27,12 +29,6 @@ export async function apiFetch<T = any>(path: string, opts: Opts = {}) {
   return data as T
 }
 
-export interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  user_name: string,
-}
 
 export function fetchNonFriends(userId: string) {
   return apiFetch<{ users: User[] }>(
@@ -53,6 +49,62 @@ export function createFriendRequest(senderId: string, receiverId: string) {
     json: {
       sender_id: senderId,
       receiver_id: receiverId
+    }
+  });
+}
+
+export function listMessages(conversationId: string) {
+  return apiFetch(`/v1/conversations/${conversationId}/messages`, {
+    method: "GET"
+  });
+}
+
+export function listConversations(userId: string) {
+  return apiFetch("/v1/conversations", {
+    method: "POST",
+    json: {
+      user_id: userId,
+    }
+  });
+}
+
+export function createMessage(conversationId: string, senderId: string, content: string) {
+  return apiFetch("/v1/message", {
+    method: "POST",
+    json: {
+      message: {
+        conversation_id: parseInt(conversationId, 10),
+        sender_id: parseInt(senderId, 10),
+        content: content
+      }
+    }
+  });
+}
+
+export async function getUser(id: string) {
+  const response = await apiFetch<{ users: User[] }>("/v1/users:list", {
+    method: "POST",
+    json: {
+      page_size: 10,
+      filters: [
+        {
+          user_ids: {
+            user_id: [parseInt(id, 10)],
+          },
+        },
+      ],
+    },
+  });
+
+  return response.users && response.users.length > 0 ? response.users[0] : null;
+}
+
+export async function createConversation (id1: string, id2: string) {
+  return await apiFetch<{ conversation: Conversation }>("/v1/conversation", {
+    method: "POST",
+    json: {
+      user1_id: id1,
+      user2_id: id2,
     }
   });
 }
