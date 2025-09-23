@@ -62,7 +62,7 @@ func (svc *friendRequestService) UpdateFriendRequest(ctx context.Context, req *p
 				log.Printf("WARN: sender %s has no email, skipping email notification", senderID)
 			} else {
 				subject := "Friend request accepted on GoChat"
-				body := fmt.Sprintf("Hi %s,\n\nGood news — your friend request to %s (@%s) was accepted.\n\nYou can now start chatting!\n\n- GoChat Team",
+				body := fmt.Sprintf("Hi %s,\n\nGood news! Your friend request to %s (@%s) was accepted.\n\nYou can now start chatting!\n\n- GoChat Team",
 					// preferam numele senderului in salut; daca nu exista, folosim email-ul
 					func() string {
 						if sender != nil && sender.FirstName != "" {
