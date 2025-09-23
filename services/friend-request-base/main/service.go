@@ -9,11 +9,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	proto "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/friend-request-base/proto"
+	pbuser "github.com/Costin2000/GoChat---Schwarz-Internship---2025/services/user-base/proto"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const port = ":50052"
@@ -21,6 +26,8 @@ const port = ":50052"
 type friendRequestService struct {
 	proto.UnimplementedFriendRequestServiceServer
 	storageAccess StorageAccess
+	emailPub      EmailPublisher
+	userClient    pbuser.UserServiceClient
 }
 
 // retrieve db setup from the .env file
@@ -99,16 +106,53 @@ func main() {
 	}
 	log.Println("Successfully connected to PostgreSQL database.")
 
+	// Initialze RabbitMQ publisher
+	rmqAddr := os.Getenv("RABBITMQ_ADDR")
+	var emailPub EmailPublisher
+	if rmqAddr != "" {
+		conn, err := connectToRabbitMQWithRetries(rmqAddr)
+		if err != nil {
+			log.Printf("WARN: cannot connect to RabbitMQ (%s): %v (FriendRequest will work, but no emails published)", rmqAddr, err)
+		} else {
+			defer conn.Close()
+			pub, err := newAmqpEmailPublisher(conn)
+			if err != nil {
+				log.Printf("WARN: cannot create email publisher: %v", err)
+			} else {
+				defer pub.Close()
+				emailPub = pub
+				log.Println("Connected to RabbitMQ and email publisher ready!")
+			}
+		}
+	} else {
+		log.Println("WARN: RABBITMQ_ADDR not set; emails will not be published")
+	}
+
 	// network connection
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Error polling port %s %v", port, err)
 	}
 
+	userAddr := os.Getenv("USER_ADDR")
+	if userAddr == "" {
+		userAddr = "user-base:50051"
+	}
+
+	userConn, err := grpc.Dial(userAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect to auth service")
+	}
+	defer userConn.Close()
+
+	userClient := pbuser.NewUserServiceClient(userConn)
+
 	// server connections
 	storage := newPostgresAccess(db)
 	FriendRequestServer := &friendRequestService{
 		storageAccess: storage,
+		emailPub:      emailPub,
+		userClient:    userClient,
 	}
 
 	grpcServer := grpc.NewServer()
@@ -121,4 +165,22 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
+}
+
+func connectToRabbitMQWithRetries(addr string) (*amqp.Connection, error) {
+	var conn *amqp.Connection
+	var err error
+	maxRetries := 10
+	backoff := 3 * time.Second
+
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(addr)
+		if err == nil {
+			log.Println("friend-request-base: connected to RabbitMQ")
+			return conn, nil
+		}
+		log.Printf("friend-request-base: cannot connect to RabbitMQ, retrying in %v... (%d/%d)", backoff, i, maxRetries)
+		time.Sleep(backoff)
+	}
+	return nil, err
 }
