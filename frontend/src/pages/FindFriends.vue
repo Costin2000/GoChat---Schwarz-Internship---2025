@@ -1,30 +1,34 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-xl font-bold mb-4 text-white">Find Friends</h1>
+  <AuthLayout>
+    <AuthCard>
+      <div class="p-4">
+        <h1 class="text-xl font-bold mb-4 text-white">Find Friends</h1>
 
-    <div v-if="loading" class="text-green-200">Loading...</div>
-    <div v-else-if="error" class="text-red-300">{{ error }}</div>
-    <div v-else-if="users.length === 0" class="text-white">No users available.</div>
+        <div v-if="loading" class="text-green-200">Loading...</div>
+        <div v-else-if="error" class="text-red-300">{{ error }}</div>
+        <div v-else-if="users.length === 0" class="text-white">No users available.</div>
 
-    <ul v-else class="space-y-2">
-      <li
-        v-for="u in users"
-        :key="u.id"
-        class="flex justify-between items-center border rounded p-2"
-      >
-        <div>
-          <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
-          <p class="user-handle">@{{ u.user_name }}</p>
-        </div>
-        <button
-          @click="sendFriendRequest(u.id)"
-          class="add-friend-btn"
-        >
-          Add Friend
-        </button>
-      </li>
-    </ul>
-  </div>
+        <ul v-else class="space-y-2">
+          <li
+            v-for="u in users"
+            :key="u.id"
+            class="flex justify-between items-center border rounded p-2"
+          >
+            <div>
+              <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
+              <p class="user-handle">@{{ u.user_name }}</p>
+            </div>
+            <button
+              @click="sendFriendRequest(u.id)"
+              class="add-friend-btn"
+            >
+              Add Friend
+            </button>
+          </li>
+        </ul>
+      </div>
+    </AuthCard>
+  </AuthLayout>
 </template>
 
 <style scoped>
@@ -60,7 +64,8 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
 import { User, fetchNonFriends, createFriendRequest } from '@/lib/api';
-
+import AuthLayout from '@/components/AuthLayout.vue'
+import AuthCard from '@/components/AuthCard.vue'
 
 
 const router = useRouter();

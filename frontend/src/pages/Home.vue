@@ -3,7 +3,6 @@
     <AuthCard title="Home">
       <p class="mb-3">You are logged in.</p>
       <button class="btn btn-outline-secondary w-100" @click="logout">Log out</button>
-      <button class="btn btn-success w-100 mb-3" @click="goFriends">View friends</button>
     </AuthCard>
   </AuthLayout>
 </template>

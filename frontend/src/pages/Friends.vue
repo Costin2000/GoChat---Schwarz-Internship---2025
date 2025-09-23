@@ -1,59 +1,59 @@
 <template>
-  <div class="min-vh-100 d-flex flex-column" :style="appBg">
-    <div class="container py-5 flex-grow-1">
-      <div class="mx-auto" style="max-width: 900px;">
-        <div class="card shadow-lg border-0 rounded-4" style="background: rgba(255,255,255,0.9)">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h3 class="m-0">Your friends</h3>
-              <button class="btn btn-outline-secondary" :disabled="loading" @click="refresh">
-                <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
-                Refresh
-              </button>
+  <AuthLayout>
+    <AuthCard title="Your Friends">
+      
+      <!-- All the specific content for the friends list goes here -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- The title is now passed as a prop, so we can remove the h3 -->
+        <div></div>
+        <button class="btn btn-outline-secondary" :disabled="loading" @click="refresh">
+          <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
+          Refresh
+        </button>
+      </div>
+
+      <div v-if="friends.length === 0 && !loading" class="text-muted">
+        No friends yet.
+      </div>
+
+      <ul class="list-group list-group-flush">
+        <li v-for="f in friends" :key="f.id"
+            class="list-group-item d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                 style="width:44px;height:44px;background:#d1e7dd;color:#0f5132;font-weight:700;">
+              {{ initials(f) }}
             </div>
-
-            <div v-if="friends.length === 0 && !loading" class="text-muted">
-              No friends yet.
-            </div>
-
-            <ul class="list-group list-group-flush">
-              <li v-for="f in friends" :key="f.id"
-                  class="list-group-item d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                       style="width:44px;height:44px;background:#d1e7dd;color:#0f5132;font-weight:700;">
-                    {{ initials(f) }}
-                  </div>
-                  <div>
-                    <div class="fw-semibold">{{ fullName(f) }}</div>
-                    <div class="text-muted small">@{{ f.user_name }}</div>
-                  </div>
-                </div>
-
-                <!-- Message button just routes to /conversation, your colleague will wire it -->
-                <button class="btn btn-success"
-                        @click="openConversation(f)">
-                  Message
-                </button>
-              </li>
-            </ul>
-
-            <div class="text-center mt-4">
-              <button v-if="nextToken" class="btn btn-outline-success px-4"
-                      :disabled="loading" @click="loadMore">
-                <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
-                Load more
-              </button>
+            <div>
+              <div class="fw-semibold">{{ fullName(f) }}</div>
+              <div class="text-muted small">@{{ f.user_name }}</div>
             </div>
           </div>
-        </div>
+
+          <button class="btn btn-success"
+                  @click="openConversation(f)">
+            Message
+          </button>
+        </li>
+      </ul>
+
+      <div class="text-center mt-4">
+        <button v-if="nextToken" class="btn btn-outline-success px-4"
+                :disabled="loading" @click="loadMore">
+          <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
+          Load more
+        </button>
       </div>
-    </div>
-  </div>
+
+    </AuthCard>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import AuthLayout from '@/components/AuthLayout.vue'
+import AuthCard from '@/components/AuthCard.vue'
+
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/lib/api'
 
@@ -63,7 +63,7 @@ type Friend = {
   last_name?: string
   user_name?: string
   email?: string
-  conversation_id?: number | string | null // if backend provides it
+  conversation_id?: number | string | null
 }
 
 const PAGE_SIZE = 10
@@ -71,10 +71,6 @@ const friends = ref<Friend[]>([])
 const nextToken = ref<string>("")
 const loading = ref(false)
 const router = useRouter()
-
-const appBg = computed(() => ({
-  background: 'linear-gradient(135deg, rgba(15,81,50,1) 0%, rgba(25,135,84,1) 60%, rgba(209,231,221,1) 100%)'
-}))
 
 function fullName(f: Friend) {
   const fn = f.first_name?.trim() || ''
@@ -135,3 +131,10 @@ function openConversation(f: Friend) {
 
 onMounted(() => { fetchFriends() })
 </script>
+
+<style scoped>
+.list-group-item {
+  background-color: transparent; /* Makes list items blend with the card background */
+}
+</style>
+

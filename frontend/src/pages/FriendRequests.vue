@@ -1,75 +1,79 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-xl font-bold mb-4" style="color: white">Friend Requests</h1>
+  <AuthLayout>
+    <AuthCard>
+      <div class="p-4">
+        <h1 class="text-xl font-bold mb-4" style="color: white">Friend Requests</h1>
 
-    <div v-if="loading && requests.length === 0" class="text-green-200">
-      Loading...
-    </div>
-    <div v-else-if="error" class="text-red-300">
-      {{ error }}
-    </div>
-    <div v-else-if="requests.length === 0" style="color: white">
-      No pending friend requests.
-    </div>
-
-    <ul v-else class="space-y-2">
-      <li
-        v-for="r in requests"
-        :key="r.id"
-        class="flex justify-between items-center border rounded p-2 request-item"
-      >
-        <div>
-          <!-- Primul rând: nume complet -->
-          <p class="font-semibold text-lg" style="color: white">
-            {{ usersMap[r.sender_id]?.first_name }} {{ usersMap[r.sender_id]?.last_name }}
-          </p>
-          <!-- Al doilea rând: username -->
-          <p class="text-sm" style="color: #08ecb7">
-            @{{ usersMap[r.sender_id]?.user_name }}
-          </p>
-          <!-- Al treilea rând: data -->
-          <p class="text-xs" style="color: #bcded0">
-            {{ formatDate(r.created_at) }}
-          </p>
+        <div v-if="loading && requests.length === 0" class="text-green-200">
+          Loading...
+        </div>
+        <div v-else-if="error" class="text-red-300">
+          {{ error }}
+        </div>
+        <div v-else-if="requests.length === 0" style="color: white">
+          No pending friend requests.
         </div>
 
-        <div class="flex btn-group">
-          <button
-            @click="updateRequest(r.id, 'STATUS_ACCEPTED')"
-            class="action-btn accept-btn"
-            :disabled="actionLoading === r.id"
-            aria-label="Accept friend request"
+        <ul v-else class="space-y-2">
+          <li
+            v-for="r in requests"
+            :key="r.id"
+            class="flex justify-between items-center border rounded p-2 request-item"
           >
-            <span v-if="actionLoading === r.id">...</span>
-            <span v-else>Accept</span>
-          </button>
+            <div>
+              <!-- Primul rând: nume complet -->
+              <p class="font-semibold text-lg" style="color: white">
+                {{ usersMap[r.sender_id]?.first_name }} {{ usersMap[r.sender_id]?.last_name }}
+              </p>
+              <!-- Al doilea rând: username -->
+              <p class="text-sm" style="color: #08ecb7">
+                @{{ usersMap[r.sender_id]?.user_name }}
+              </p>
+              <!-- Al treilea rând: data -->
+              <p class="text-xs" style="color: #bcded0">
+                {{ formatDate(r.created_at) }}
+              </p>
+            </div>
 
+            <div class="flex btn-group">
+              <button
+                @click="updateRequest(r.id, 'STATUS_ACCEPTED')"
+                class="action-btn accept-btn"
+                :disabled="actionLoading === r.id"
+                aria-label="Accept friend request"
+              >
+                <span v-if="actionLoading === r.id">...</span>
+                <span v-else>Accept</span>
+              </button>
+
+              <button
+                @click="updateRequest(r.id, 'STATUS_REJECTED')"
+                class="action-btn reject-btn"
+                :disabled="actionLoading === r.id"
+                aria-label="Reject friend request"
+              >
+                <span v-if="actionLoading === r.id">...</span>
+                <span v-else>Reject</span>
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <div class="mt-4 text-center">
           <button
-            @click="updateRequest(r.id, 'STATUS_REJECTED')"
-            class="action-btn reject-btn"
-            :disabled="actionLoading === r.id"
-            aria-label="Reject friend request"
+            v-if="nextPageToken && !loading"
+            @click="loadMore"
+            class="load-more-btn"
           >
-            <span v-if="actionLoading === r.id">...</span>
-            <span v-else>Reject</span>
+            Load more
           </button>
+          <div v-if="loading && requests.length > 0" class="text-green-200 mt-2">
+            Loading more...
+          </div>
         </div>
-      </li>
-    </ul>
-
-    <div class="mt-4 text-center">
-      <button
-        v-if="nextPageToken && !loading"
-        @click="loadMore"
-        class="load-more-btn"
-      >
-        Load more
-      </button>
-      <div v-if="loading && requests.length > 0" class="text-green-200 mt-2">
-        Loading more...
       </div>
-    </div>
-  </div>
+    </AuthCard>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
@@ -78,6 +82,8 @@ import { useRouter } from "vue-router";
 import { apiFetch, createConversation } from "@/lib/api";
 import { getToken, getUserId } from "@/lib/auth";
 import { Conversation } from '@/proto/services/conversation-base/proto/conversation'
+import AuthLayout from '@/components/AuthLayout.vue'
+import AuthCard from '@/components/AuthCard.vue'
 
 const router = useRouter();
 
@@ -237,19 +243,16 @@ function formatDate(dateStr: string): string {
   transform: none;
 }
 
-/* Accept hover (verde inchis) */
 .accept-btn:hover:not(:disabled) {
   background-color: #34d399 !important;
   transform: translateY(-1px);
 }
 
-/* Reject hover (rosu) */
 .reject-btn:hover:not(:disabled) {
   background-color: #f87171 !important; /* rosu */
   transform: translateY(-1px);
 }
 
-/* Load More */
 .load-more-btn {
   background-color: #bbf7d0 !important;
   color: #000 !important;

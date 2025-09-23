@@ -5,11 +5,11 @@
       <RouterLink v-if="isAuth" to='/conversations' class="nav-link">Conversations</RouterLink>
       <RouterLink v-if="isAuth" to="/find-friends" class="nav-link">Find Friends</RouterLink>
       <RouterLink v-if="isAuth" to="/friend-requests" class="nav-link">Friend Requests</RouterLink>
+      <RouterLink v-if="isAuth" to="/friends" class="nav-link">Friends</RouterLink>
     </div>
     <nav class="d-flex gap-3">
       <RouterLink v-if="showRegisterLink" to="/register">Register</RouterLink>
       <RouterLink v-if="showLoginLink" to="/login">Login</RouterLink>
-      <RouterLink v-if="showFriendsLink" to="/friends">Friends</RouterLink>
 
     </nav>
   </header>
