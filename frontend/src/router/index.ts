@@ -5,18 +5,20 @@ import Home from '@/pages/Home.vue'
 import FindFriends from '@/pages/FindFriends.vue'
 import FriendRequests from '@/pages/FriendRequests.vue'
 import Conversations from '@/pages/Conversations.vue'
+import Friends from '@/pages/Friends.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },
-
   { path: '/home', name: 'Home', component: Home, meta: { requiresAuth: true } },
 
-  { path: '/:pathMatch(.*)*', redirect: '/login' },
-  { path: '/conversations', name: 'Conversations', component: Conversations, meta: { requiresAuth: true } },
-  { path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true}  },
+  { path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true } },
   { path: '/friend-requests', name: 'FriendRequests', component: FriendRequests, meta: { requiresAuth: true } },
+  { path: '/friends', name: 'Friends', component: Friends, meta: { requiresAuth: true } },
+  { path: '/conversations', name: 'Conversations', component: Conversations, meta: { requiresAuth: true } },
+  
+  { path: '/:pathMatch(.*)*', redirect: '/login' },
 ]
 
 export const router = createRouter({

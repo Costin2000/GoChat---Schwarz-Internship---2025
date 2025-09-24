@@ -5,11 +5,12 @@
       <RouterLink v-if="isAuth" to='/conversations' class="nav-link">Conversations</RouterLink>
       <RouterLink v-if="isAuth" to="/find-friends" class="nav-link">Find Friends</RouterLink>
       <RouterLink v-if="isAuth" to="/friend-requests" class="nav-link">Friend Requests</RouterLink>
+      <RouterLink v-if="isAuth" to="/friends" class="nav-link">Friends</RouterLink>
     </div>
     <nav class="d-flex gap-3">
       <RouterLink v-if="showRegisterLink" to="/register">Register</RouterLink>
-      <!-- Pe Register: arătăm doar Login -->
       <RouterLink v-if="showLoginLink" to="/login">Login</RouterLink>
+
     </nav>
   </header>
 
@@ -27,6 +28,7 @@ const isAuth = computed(() => !!localStorage.getItem('auth_token'))
 
 const showRegisterLink = computed(() => !isAuth.value && route.name !== 'Register')
 const showLoginLink = computed(() => !isAuth.value && route.name !== 'Login')
+const showFriendsLink = computed(() => !isAuth.value && route.name !== 'Friends')
 
 function goBrand() {
   router.push(isAuth.value ? '/home' : '/login')

@@ -1,53 +1,53 @@
 <template>
-  <div class="page-container">
-    <h1 class="title">Conversations</h1>
+    <div class="page-container">
+      <h1 class="title">Conversations</h1>
 
-    <div v-if="loading" class="loading-text">Loading conversations...</div>
-    <div v-else-if="error" class="error-text">{{ error }}</div>
+      <div v-if="loading" class="loading-text">Loading conversations...</div>
+      <div v-else-if="error" class="error-text">{{ error }}</div>
 
-    <div v-else class="chat-container">
-      <div class="conversations-panel">
-        <ul v-if="conversations.length > 0" class="conversations-list">
-          <li v-for="convo in conversations" :key="convo.id" class="conversation-item"
-            :class="{ 'selected': convo.id === selectedConversationId }" @click="selectConversation(convo)">
-            <div class="user-info">
-              <span class="full-name">
-                {{ userCache.get(getOtherParticipantId(convo))?.first_name || 'Loading...' }}
-                {{ userCache.get(getOtherParticipantId(convo))?.last_name }}
-              </span>
-              <span class="username">@{{ userCache.get(getOtherParticipantId(convo))?.user_name || '...' }}</span>
-            </div>
-          </li>
-        </ul>
-        <div v-else class="info-text">No conversations found. Make some friends to start chatting! </div>
-      </div>
-
-      <div class="messages-panel">
-        <div v-if="!selectedConversationId" class="info-text ">
-          Select a conversation to view messages
-        </div>
-        <div v-else class="message-view-container">
-          <div v-if="messagesLoading" class="loading-text">Loading messages...</div>
-        <div v-else-if="messages.length === 0" class="info-text initial-message">
-            No messages yet. Say hello!
-          </div>
-          <ul v-else ref="messageListEl" class="messages-list">
-            <li v-for="msg in messages" :key="msg.id" class="message-item"
-              :class="isMyMessage(msg.sender_id) ? 'sent' : 'received'">
-              <div class="message-bubble">
-                {{ msg.content }}
+      <div v-else class="chat-container">
+        <div class="conversations-panel">
+          <ul v-if="conversations.length > 0" class="conversations-list">
+            <li v-for="convo in conversations" :key="convo.id" class="conversation-item"
+              :class="{ 'selected': convo.id === selectedConversationId }" @click="selectConversation(convo)">
+              <div class="user-info">
+                <span class="full-name">
+                  {{ userCache.get(getOtherParticipantId(convo))?.first_name || 'Loading...' }}
+                  {{ userCache.get(getOtherParticipantId(convo))?.last_name }}
+                </span>
+                <span class="username">@{{ userCache.get(getOtherParticipantId(convo))?.user_name || '...' }}</span>
               </div>
             </li>
           </ul>
-          <form @submit.prevent="sendMessage" class="message-input-form">
-            <input v-model="newMessageContent" type="text" class="message-input" placeholder="Type a message..."
-              autocomplete="off" />
-            <button type="submit" class="send-btn">Send</button>
-          </form>
+          <div v-else class="info-text">No conversations found. Make some friends to start chatting! </div>
+        </div>
+
+        <div class="messages-panel">
+          <div v-if="!selectedConversationId" class="info-text ">
+            Select a conversation to view messages
+          </div>
+          <div v-else class="message-view-container">
+            <div v-if="messagesLoading" class="loading-text">Loading messages...</div>
+          <div v-else-if="messages.length === 0" class="info-text initial-message">
+              No messages yet. Say hello!
+            </div>
+            <ul v-else ref="messageListEl" class="messages-list">
+              <li v-for="msg in messages" :key="msg.id" class="message-item"
+                :class="isMyMessage(msg.sender_id) ? 'sent' : 'received'">
+                <div class="message-bubble">
+                  {{ msg.content }}
+                </div>
+              </li>
+            </ul>
+            <form @submit.prevent="sendMessage" class="message-input-form">
+              <input v-model="newMessageContent" type="text" class="message-input" placeholder="Type a message..."
+                autocomplete="off" />
+              <button type="submit" class="send-btn">Send</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -247,7 +247,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
 import {
   listMessages,
@@ -261,6 +261,7 @@ import { Conversation } from '@/proto/services/conversation-base/proto/conversat
 import { Message } from '@/proto/services/message-base/proto/messagebase'
 
 const router = useRouter();
+const route = useRoute();
 console.log('Component loaded. Current User ID:', getUserId());
 
 const conversations = ref<Conversation[]>([]);
@@ -284,13 +285,19 @@ onMounted(async () => {
     const res = await listConversations(getUserId());
     conversations.value = res.conversations || [];
     await fetchAllUsersForConversations(conversations.value);
+    const requestedConvoId = route.query.conversation;
+    if (requestedConvoId && typeof requestedConvoId === 'string') {
+      const convoToSelect = conversations.value.find(c => c.id === requestedConvoId);
+      if (convoToSelect) {
+        selectConversation(convoToSelect);
+      }
+    }
   } catch (e: any) {
     error.value = `Failed to load conversations: ${e.message}`;
   } finally {
     loading.value = false;
   }
 });
-
 
 
 async function fetchAllUsersForConversations(convos: Conversation[]) {
@@ -324,6 +331,7 @@ async function scrollToBottom() {
 
 async function selectConversation(conversation: Conversation) {
   selectedConversationId.value = conversation.id;
+  router.push({ query: { conversation: conversation.id } });
   messages.value = [];
   messagesLoading.value = true;
   try {

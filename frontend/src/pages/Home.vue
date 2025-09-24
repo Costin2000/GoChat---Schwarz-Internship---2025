@@ -13,9 +13,14 @@ import AuthCard from '@/components/AuthCard.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
 function logout() {
   localStorage.removeItem('auth_token')
   localStorage.removeItem('user_id')
   router.replace('/login')
+}
+
+function goFriends() {
+  router.push('/friends')
 }
 </script>

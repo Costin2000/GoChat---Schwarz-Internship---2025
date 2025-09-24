@@ -1,46 +1,74 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-xl font-bold mb-4 text-white">Find Friends</h1>
+  <AuthLayout>
+    <AuthCard title="Find Friends" maxWidth="900px">
+      
+      <div v-if="loading" class="text-muted text-center py-5">Loading...</div>
+      <div v-else-if="error" class="text-danger text-center py-5">{{ error }}</div>
+      <div v-else-if="users.length === 0" class="text-muted text-center py-5">No new users to add.</div>
 
-    <div v-if="loading" class="text-green-200">Loading...</div>
-    <div v-else-if="error" class="text-red-300">{{ error }}</div>
-    <div v-else-if="users.length === 0" class="text-white">No users available.</div>
-
-    <ul v-else class="space-y-2">
-      <li
-        v-for="u in users"
-        :key="u.id"
-        class="flex justify-between items-center border rounded p-2"
-      >
-        <div>
-          <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
-          <p class="user-handle">@{{ u.user_name }}</p>
-        </div>
-        <button
-          @click="sendFriendRequest(u.id)"
-          class="add-friend-btn"
+      <ul v-else class="list-group list-group-flush">
+        <li
+          v-for="u in users"
+          :key="u.id"
+          class="list-group-item d-flex align-items-center justify-content-between"
         >
-          Add Friend
-        </button>
-      </li>
-    </ul>
-  </div>
+          <div class="d-flex align-items-center">
+            <div class="user-avatar">
+              {{ initials(u) }}
+            </div>
+            <div>
+              <div class="user-name">{{ u.first_name }} {{ u.last_name }}</div>
+              <p class="user-handle">@{{ u.user_name }}</p>
+            </div>
+          </div>
+          <button
+            @click="sendFriendRequest(u.id)"
+            class="add-friend-btn"
+          >
+            Add Friend
+          </button>
+        </li>
+      </ul>
+    </AuthCard>
+  </AuthLayout>
 </template>
 
 <style scoped>
+.list-group-item {
+  background-color: transparent;
+  padding: 1rem 0;
+}
+
+.list-group-item:first-child {
+  padding-top: 0; 
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  background-color: #d1e7dd;
+  color: #0f5132;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+}
+
 .user-name {
-  color: #08ecb7;
-  font-size: 2.1rem;
+  color: #343a40; 
   font-weight: 600;
 }
 
 .user-handle {
-  color: #35e3ef;
+  color: #6c757d;
   font-size: 0.9rem;
+  margin: 0;
 }
 
 .add-friend-btn {
-  background-color: #257654;
+  background-color: #198754;
   color: white;
   font-weight: 600;
   border: none;
@@ -51,23 +79,31 @@
   transition: background-color 0.2s ease-in-out;
 }
 .add-friend-btn:hover {
-  background-color: #159f65
+  background-color: #157347;
 }
 </style>
 
 <script setup lang="ts">
+
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
 import { User, fetchNonFriends, createFriendRequest } from '@/lib/api';
-
-
+import AuthLayout from '@/components/AuthLayout.vue'
+import AuthCard from '@/components/AuthCard.vue';
 
 const router = useRouter();
-
 const users = ref<User[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+function initials(f: User) {
+  const fn = (f.first_name || '').trim();
+  const ln = (f.last_name || '').trim();
+  const a = fn ? fn[0] : '';
+  const b = ln ? ln[0] : '';
+  return (a + b || (f.user_name?.[0] ?? 'U')).toUpperCase();
+}
 
 onMounted(async () => {
   if (!getToken()) {
@@ -94,5 +130,5 @@ async function sendFriendRequest(userId: string) {
     error.value = `Could not send request: ${e.message}`;
   }
 }
-
 </script>
+
