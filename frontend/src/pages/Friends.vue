@@ -2,34 +2,37 @@
   <AuthLayout>
     <AuthCard title="Your Friends" maxWidth="900px">
       
-      <!-- Search Bar -->
-      <div class="mb-3">
-        <input 
+      <!-- Search + Refresh Row (folosind acelasi grid ca list items) -->
+      <div class="row-grid header mb-3">
+        <input
           v-model="searchQuery"
           type="text"
-          class="form-control"
+          class="form-control search-input"
           placeholder="Search friends by name..."
         />
-      </div>
-
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div></div>
-        <button class="btn btn-outline-secondary" :disabled="loading" @click="refresh">
+        <button
+          class="btn btn-outline-secondary refresh-btn"
+          :disabled="loading"
+          @click="refresh"
+        >
           <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
           Refresh
         </button>
       </div>
 
-      <div v-if="filteredFriends.length === 0 && !loading" class="text-muted">
+      <div v-if="filteredFriends.length === 0 && !loading" class="text-muted px-3">
         No friends found.
       </div>
 
       <ul class="list-group list-group-flush">
-        <li v-for="f in filteredFriends" :key="f.id"
-            class="list-group-item d-flex align-items-center justify-content-between">
+        <li
+          v-for="f in filteredFriends"
+          :key="f.id"
+          class="list-group-item row-grid align-items-center"
+        >
+          <!-- left column: avatar + name -->
           <div class="d-flex align-items-center">
-            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                 style="width:44px;height:44px;background:#d1e7dd;color:#0f5132;font-weight:700;">
+            <div class="avatar-circle me-3">
               {{ initials(f) }}
             </div>
             <div>
@@ -38,9 +41,12 @@
             </div>
           </div>
 
-          <button class="btn btn-success"
-                  @click="openConversation(f)"
-                  :disabled="isOpeningConvo === f.id">
+          <!-- right column: message button (aceeasi coloana cu Refresh) -->
+          <button
+            class="btn btn-success message-btn"
+            @click="openConversation(f)"
+            :disabled="isOpeningConvo === f.id"
+          >
             <span v-if="isOpeningConvo === f.id" class="spinner-border spinner-border-sm" />
             <span v-else>Message</span>
           </button>
@@ -196,7 +202,67 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.list-group-item {
+/* GRID: aceeasi structura pentru header si pentru fiecare list item,
+   astfel butonul din coloana a doua e aliniat perfect pe verticala */
+.row-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* header-ul primeste exact acelasi padding orizontal ca list-group-item */
+.row-grid.header {
+  padding: 0.75rem 1.25rem;
+}
+
+/* list items folosesc acelasi grid si padding pentru alinierea exacta pe coloana */
+.list-group-item.row-grid {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
   background-color: transparent;
+}
+
+/* avatar */
+.avatar-circle {
+  width:44px;
+  height:44px;
+  background:#d1e7dd;
+  color:#0f5132;
+  font-weight:700;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* butoane (aceeasi latime minima pentru consistenta) */
+.refresh-btn,
+.message-btn {
+  min-width: 110px;
+  text-align: center;
+}
+
+/* search input ocupa toata coloana stanga */
+.search-input {
+  width: 100%;
+}
+
+/* responsive */
+@media (max-width: 576px) {
+  .row-grid {
+    grid-template-columns: 1fr;
+  }
+  .list-group-item.row-grid {
+    display: block;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .message-btn,
+  .refresh-btn {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.5rem;
+  }
 }
 </style>
