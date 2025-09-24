@@ -2,6 +2,16 @@
   <AuthLayout>
     <AuthCard title="Your Friends" maxWidth="900px">
       
+      <!-- Search Bar -->
+      <div class="mb-3">
+        <input 
+          v-model="searchQuery"
+          type="text"
+          class="form-control"
+          placeholder="Search friends by name..."
+        />
+      </div>
+
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div></div>
         <button class="btn btn-outline-secondary" :disabled="loading" @click="refresh">
@@ -10,12 +20,12 @@
         </button>
       </div>
 
-      <div v-if="friends.length === 0 && !loading" class="text-muted">
-        No friends yet.
+      <div v-if="filteredFriends.length === 0 && !loading" class="text-muted">
+        No friends found.
       </div>
 
       <ul class="list-group list-group-flush">
-        <li v-for="f in friends" :key="f.id"
+        <li v-for="f in filteredFriends" :key="f.id"
             class="list-group-item d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center">
             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
@@ -52,7 +62,7 @@
 <script setup lang="ts">
 import AuthLayout from '@/components/AuthLayout.vue'
 import AuthCard from '@/components/AuthCard.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch, listConversations } from '@/lib/api'
 import { getUserId } from '@/lib/auth'
@@ -69,7 +79,8 @@ const PAGE_SIZE = 10
 const friends = ref<Friend[]>([])
 const nextToken = ref<string>("")
 const loading = ref(false)
-const isOpeningConvo = ref<string | null>(null) // To show a spinner on the clicked button
+const isOpeningConvo = ref<string | null>(null)
+const searchQuery = ref("")
 const router = useRouter()
 
 function fullName(f: Friend) {
@@ -85,6 +96,15 @@ function initials(f: Friend) {
   const b = ln ? ln[0] : ''
   return (a + b || (f.user_name?.[0] ?? 'U')).toUpperCase()
 }
+
+const filteredFriends = computed(() => {
+  if (!searchQuery.value.trim()) return friends.value
+  const q = searchQuery.value.toLowerCase()
+  return friends.value.filter(f => {
+    const name = `${f.first_name || ''} ${f.last_name || ''}`.toLowerCase()
+    return name.includes(q)
+  })
+})
 
 async function fetchFriends(token?: string) {
   loading.value = true
@@ -120,10 +140,10 @@ async function openConversation(friend: Friend) {
       router.push('/login');
       return;
     }
-    
+
     console.log('--- STARTING CONVERSATION SEARCH ---');
     console.log(`Searching for convo between ME (ID: "${currentUserId}") and FRIEND (ID: "${friend.id}")`);
-
+    
     const res = await listConversations(currentUserId);
     const allConversations = (res.conversations || []) as any[];
 
@@ -132,7 +152,7 @@ async function openConversation(friend: Friend) {
     const conversation = allConversations.find(c => {
       const user1 = c.user1Id || c.user1_id;
       const user2 = c.user2Id || c.user2_id;
-
+      
       console.log(`Checking convo ID ${c.id}: user1="${user1}", user2="${user2}"`);
       const isMatch = (user1 === currentUserId && user2 === friend.id) ||
                       (user2 === currentUserId && user1 === friend.id);
@@ -180,4 +200,3 @@ onMounted(() => {
   background-color: transparent;
 }
 </style>
-

@@ -2,13 +2,25 @@
   <AuthLayout>
     <AuthCard title="Find Friends" maxWidth="900px">
       
+      <!-- Search Bar -->
+      <div class="mb-3">
+        <input 
+          v-model="searchQuery"
+          type="text"
+          class="form-control"
+          placeholder="Search users by name..."
+        />
+      </div>
+
       <div v-if="loading" class="text-muted text-center py-5">Loading...</div>
       <div v-else-if="error" class="text-danger text-center py-5">{{ error }}</div>
-      <div v-else-if="users.length === 0" class="text-muted text-center py-5">No new users to add.</div>
+      <div v-else-if="filteredUsers.length === 0" class="text-muted text-center py-5">
+        No matching users found.
+      </div>
 
       <ul v-else class="list-group list-group-flush">
         <li
-          v-for="u in users"
+          v-for="u in filteredUsers"
           :key="u.id"
           class="list-group-item d-flex align-items-center justify-content-between"
         >
@@ -84,8 +96,7 @@
 </style>
 
 <script setup lang="ts">
-
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getToken, getUserId } from '@/lib/auth';
 import { User, fetchNonFriends, createFriendRequest } from '@/lib/api';
@@ -96,6 +107,7 @@ const router = useRouter();
 const users = ref<User[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const searchQuery = ref("")
 
 function initials(f: User) {
   const fn = (f.first_name || '').trim();
@@ -104,6 +116,15 @@ function initials(f: User) {
   const b = ln ? ln[0] : '';
   return (a + b || (f.user_name?.[0] ?? 'U')).toUpperCase();
 }
+
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) return users.value
+  const q = searchQuery.value.toLowerCase()
+  return users.value.filter(u => {
+    const name = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase()
+    return name.includes(q)
+  })
+})
 
 onMounted(async () => {
   if (!getToken()) {
@@ -131,4 +152,3 @@ async function sendFriendRequest(userId: string) {
   }
 }
 </script>
-
