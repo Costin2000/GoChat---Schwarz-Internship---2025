@@ -1,74 +1,78 @@
 <template>
   <AuthLayout>
-    <AuthCard title="Friend Requests" maxWidth="900px">
-      
-      <div v-if="loading && requests.length === 0" class="text-muted text-center py-5">
-        Loading...
-      </div>
-      <div v-else-if="error" class="text-danger text-center py-5">
-        {{ error }}
-      </div>
-      <div v-else-if="requests.length === 0" class="text-muted text-center py-5">
-        No pending friend requests.
-      </div>
+    <AuthCard title="Friend Requests" maxWidth="900px" class="fr-card">
 
-      <ul v-else class="list-group list-group-flush">
-        <li
-          v-for="r in requests"
-          :key="r.id"
-          class="list-group-item d-flex align-items-center justify-content-between"
-        >
-          <div class="d-flex align-items-center">
-            <div class="user-avatar">
-              {{ initials(usersMap[r.sender_id]) }}
-            </div>
-            <div>
-              <div class="user-name">
-                {{ usersMap[r.sender_id]?.first_name }} {{ usersMap[r.sender_id]?.last_name }}
+      <div class="content-wrapper">
+        <div v-if="loading && requests.length === 0" class="text-muted text-center py-5">
+          Loading...
+        </div>
+        <div v-else-if="error" class="text-danger text-center py-5">
+          {{ error }}
+        </div>
+        <div v-else-if="requests.length === 0" class="text-muted text-center py-5">
+          No pending friend requests.
+        </div>
+
+        <div v-else class="requests-list-container">
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="r in requests"
+              :key="r.id"
+              class="list-group-item d-flex align-items-center justify-content-between"
+            >
+              <div class="d-flex align-items-center">
+                <div class="user-avatar">
+                  {{ initials(usersMap[r.sender_id]) }}
+                </div>
+                <div>
+                  <div class="user-name">
+                    {{ usersMap[r.sender_id]?.first_name }} {{ usersMap[r.sender_id]?.last_name }}
+                  </div>
+                  <p class="user-handle">
+                    @{{ usersMap[r.sender_id]?.user_name }}
+                  </p>
+                  <p class="request-date">
+                    {{ formatDate(r.created_at) }}
+                  </p>
+                </div>
               </div>
-              <p class="user-handle">
-                @{{ usersMap[r.sender_id]?.user_name }}
-              </p>
-              <p class="request-date">
-                {{ formatDate(r.created_at) }}
-              </p>
-            </div>
+
+              <div class="flex btn-group">
+                <button
+                  @click="updateRequest(r.id, 'STATUS_ACCEPTED')"
+                  class="action-btn accept-btn"
+                  :disabled="actionLoading === r.id"
+                  aria-label="Accept friend request"
+                >
+                  <span v-if="actionLoading === r.id">...</span>
+                  <span v-else>Accept</span>
+                </button>
+
+                <button
+                  @click="updateRequest(r.id, 'STATUS_REJECTED')"
+                  class="action-btn reject-btn"
+                  :disabled="actionLoading === r.id"
+                  aria-label="Reject friend request"
+                >
+                  <span v-if="actionLoading === r.id">...</span>
+                  <span v-else>Reject</span>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="mt-auto pt-3 text-center">
+          <button
+            v-if="nextPageToken && !loading"
+            @click="loadMore"
+            class="load-more-btn"
+          >
+            Load more
+          </button>
+          <div v-if="loading && requests.length > 0" class="text-muted mt-2">
+            Loading more...
           </div>
-
-          <div class="flex btn-group">
-            <button
-              @click="updateRequest(r.id, 'STATUS_ACCEPTED')"
-              class="action-btn accept-btn"
-              :disabled="actionLoading === r.id"
-              aria-label="Accept friend request"
-            >
-              <span v-if="actionLoading === r.id">...</span>
-              <span v-else>Accept</span>
-            </button>
-
-            <button
-              @click="updateRequest(r.id, 'STATUS_REJECTED')"
-              class="action-btn reject-btn"
-              :disabled="actionLoading === r.id"
-              aria-label="Reject friend request"
-            >
-              <span v-if="actionLoading === r.id">...</span>
-              <span v-else>Reject</span>
-            </button>
-          </div>
-        </li>
-      </ul>
-
-      <div class="mt-4 text-center">
-        <button
-          v-if="nextPageToken && !loading"
-          @click="loadMore"
-          class="load-more-btn"
-        >
-          Load more
-        </button>
-        <div v-if="loading && requests.length > 0" class="text-muted mt-2">
-          Loading more...
         </div>
       </div>
     </AuthCard>
@@ -113,7 +117,7 @@ function initials(user?: User) {
   const fn = (user.first_name || '').trim();
   const ln = (user.last_name || '').trim();
   const a = fn ? fn[0] : '';
-  const b = ln ? fn[0] : '';
+  const b = ln ? ln[0] : '';
   return (a + b || (user.user_name?.[0] ?? 'U')).toUpperCase();
 }
 
@@ -210,13 +214,29 @@ function formatDate(dateStr: string): string {
 </script>
 
 <style scoped>
+.fr-card {
+  height: 85vh; 
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.requests-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-right: -1.25rem;
+  padding-right: 1.25rem;
+}
+
 .list-group-item {
   background-color: transparent;
   padding: 1rem 0;
-}
-
-.list-group-item:first-child {
-  padding-top: 0;
 }
 
 .user-avatar {
@@ -292,6 +312,20 @@ function formatDate(dateStr: string): string {
 
 .load-more-btn:hover:not(:disabled) {
   background-color: #e9ecef;
+}
+
+.requests-list-container::-webkit-scrollbar {
+  width: 8px;
+}
+.requests-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.requests-list-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.requests-list-container::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 </style>
 
