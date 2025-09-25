@@ -1,64 +1,68 @@
 <template>
   <AuthLayout>
-    <AuthCard title="Your Friends" maxWidth="900px">
+    <AuthCard title="Your Friends" maxWidth="900px" class="friends-card">
       
-      <!-- Search + Refresh Row (folosind acelasi grid ca list items) -->
-      <div class="row-grid header mb-3">
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="form-control search-input"
-          placeholder="Search friends by name..."
-        />
-        <button
-          class="btn btn-outline-secondary refresh-btn"
-          :disabled="loading"
-          @click="refresh"
-        >
-          <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
-          Refresh
-        </button>
-      </div>
+      <div class="friends-content-wrapper">
+        
+        <div class="row-grid header mb-3">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="form-control search-input"
+            placeholder="Search friends by name..."
+          />
+          <button
+            class="btn btn-outline-secondary refresh-btn"
+            :disabled="loading"
+            @click="refresh"
+          >
+            <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
+            Refresh
+          </button>
+        </div>
 
-      <div v-if="filteredFriends.length === 0 && !loading" class="text-muted px-3">
-        No friends found.
-      </div>
-
-      <ul class="list-group list-group-flush">
-        <li
-          v-for="f in filteredFriends"
-          :key="f.id"
-          class="list-group-item row-grid align-items-center"
-        >
-          <!-- left column: avatar + name -->
-          <div class="d-flex align-items-center">
-            <div class="avatar-circle me-3">
-              {{ initials(f) }}
-            </div>
-            <div>
-              <div class="fw-semibold">{{ fullName(f) }}</div>
-              <div class="text-muted small">@{{ f.user_name }}</div>
-            </div>
+        <div class="friends-list-container">
+          <div v-if="filteredFriends.length === 0 && !loading" class="text-muted text-center py-5">
+            No friends found.
           </div>
 
-          <!-- right column: message button (aceeasi coloana cu Refresh) -->
-          <button
-            class="btn btn-success message-btn"
-            @click="openConversation(f)"
-            :disabled="isOpeningConvo === f.id"
-          >
-            <span v-if="isOpeningConvo === f.id" class="spinner-border spinner-border-sm" />
-            <span v-else>Message</span>
-          </button>
-        </li>
-      </ul>
+          <ul v-else class="list-group list-group-flush">
+            <li
+              v-for="f in filteredFriends"
+              :key="f.id"
+              class="list-group-item row-grid align-items-center"
+            >
+              <!-- left column: avatar + name -->
+              <div class="d-flex align-items-center">
+                <div class="avatar-circle me-3">
+                  {{ initials(f) }}
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ fullName(f) }}</div>
+                  <div class="text-muted small">@{{ f.user_name }}</div>
+                </div>
+              </div>
 
-      <div class="text-center mt-4">
-        <button v-if="nextToken" class="btn btn-outline-success px-4"
-                :disabled="loading" @click="loadMore">
-          <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
-          Load more
-        </button>
+              <button
+                class="btn btn-success message-btn"
+                @click="openConversation(f)"
+                :disabled="isOpeningConvo === f.id"
+              >
+                <span v-if="isOpeningConvo === f.id" class="spinner-border spinner-border-sm" />
+                <span v-else>Message</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="text-center mt-auto pt-3">
+          <button v-if="nextToken" class="btn btn-outline-success px-4"
+                  :disabled="loading" @click="loadMore">
+            <span v-if="loading" class="spinner-border spinner-border-sm me-2" />
+            Load more
+          </button>
+        </div>
+
       </div>
 
     </AuthCard>
@@ -191,6 +195,7 @@ function loadMore() {
 }
 function refresh() {
   if (loading.value) return
+  searchQuery.value = ''
   nextToken.value = ''
   friends.value = []
   fetchFriends()
@@ -202,28 +207,41 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* GRID: aceeasi structura pentru header si pentru fiecare list item,
-   astfel butonul din coloana a doua e aliniat perfect pe verticala */
+.friends-card {
+  height: 85vh; 
+  display: flex;
+  flex-direction: column;
+}
+
+.friends-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.friends-list-container {
+  flex-grow: 1;
+  overflow-y: auto; 
+  margin: 0 -1.25rem; 
+  padding: 0 1.25rem; 
+}
+
 .row-grid {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
   align-items: center;
 }
-
-/* header-ul primeste exact acelasi padding orizontal ca list-group-item */
 .row-grid.header {
-  padding: 0.75rem 1.25rem;
+  padding: 0; 
+  border-bottom: 1px solid #dee2e6;
 }
-
-/* list items folosesc acelasi grid si padding pentru alinierea exacta pe coloana */
 .list-group-item.row-grid {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+  padding-left: 0;
+  padding-right: 0;
   background-color: transparent;
 }
-
-/* avatar */
 .avatar-circle {
   width:44px;
   height:44px;
@@ -235,34 +253,27 @@ onMounted(() => {
   align-items:center;
   justify-content:center;
 }
-
-/* butoane (aceeasi latime minima pentru consistenta) */
 .refresh-btn,
 .message-btn {
   min-width: 110px;
   text-align: center;
 }
-
-/* search input ocupa toata coloana stanga */
 .search-input {
   width: 100%;
 }
 
-/* responsive */
-@media (max-width: 576px) {
-  .row-grid {
-    grid-template-columns: 1fr;
-  }
-  .list-group-item.row-grid {
-    display: block;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  .message-btn,
-  .refresh-btn {
-    width: 100%;
-    min-width: 0;
-    margin-top: 0.5rem;
-  }
+.friends-list-container::-webkit-scrollbar {
+  width: 8px;
+}
+.friends-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.friends-list-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.friends-list-container::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 </style>
+
