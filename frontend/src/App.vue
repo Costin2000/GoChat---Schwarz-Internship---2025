@@ -33,7 +33,7 @@ watch(() => route.fullPath, () => {
 })
 
 function goBrand() {
-  router.push(token.value ? '/home' : '/login')
+  router.push(token.value ? '/conversations' : '/login')
 }
 
 function logout() {

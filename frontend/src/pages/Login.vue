@@ -44,7 +44,7 @@ const error = ref<string | null>(null)
 
 onMounted(() => {
   const token = localStorage.getItem('auth_token')
-  if (token) router.replace('/home')
+  if (token) router.replace('/conversations')
 })
 
 async function onSubmit() {
@@ -57,7 +57,7 @@ async function onSubmit() {
     })
     localStorage.setItem('auth_token', res.token)
     localStorage.setItem('user_id', String(res.user_id))
-    router.push('/home')
+    router.push('/conversations')
   } catch (e: any) {
     error.value = e?.message || 'Login failed'
   } finally {

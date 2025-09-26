@@ -10,7 +10,6 @@ const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },
-  { path: '/home', name: 'Home', component: Conversations, meta: { requiresAuth: true } },
 
   { path: '/find-friends', name: 'FindFriends', component: FindFriends, meta: { requiresAuth: true } },
   { path: '/friend-requests', name: 'FriendRequests', component: FriendRequests, meta: { requiresAuth: true } },
@@ -33,7 +32,7 @@ router.beforeEach((to, _from, next) => {
     return
   }
   if ((to.path === '/login' || to.path === '/register') && token) {
-    next({ path: '/home', replace: true })
+    next({ path: '/conversations', replace: true })
     return
   }
   next()
