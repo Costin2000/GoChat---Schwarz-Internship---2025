@@ -139,7 +139,7 @@ func main() {
 		userAddr = "user-base:50051"
 	}
 
-	userConn, err := grpc.Dial(userAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userConn, err := grpc.NewClient(userAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic("failed to connect to auth service")
 	}
